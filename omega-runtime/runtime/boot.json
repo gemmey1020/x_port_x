@@ -1,0 +1,90 @@
+{
+    "omega_runtime_version": "2.0",
+    "boot_mode": "deterministic",
+    "runtime_root": "omega-runtime",
+    "runtime_status_file": "state/OMEGA_RUNTIME_STATUS.yaml",
+    "load_order": [
+        "core",
+        "profiles",
+        "filters",
+        "router",
+        "state",
+        "audit"
+    ],
+    "required_domains": [
+        "core",
+        "router",
+        "filters",
+        "state"
+    ],
+    "core_contracts": [
+        "core/OMEGA_KERNEL_CORE.md",
+        "core/OMEGA_SIGNAL_REGISTRY.yaml",
+        "core/OMEGA_MODE_REGISTRY.yaml",
+        "core/OMEGA_OUTPUT_CONTRACTS.yaml",
+        "core/OMEGA_TRUTH_POLICY.yaml",
+        "core/OMEGA_EXECUTION_CONTRACT.yaml",
+        "core/OMEGA_MODE_ENGINE.yaml",
+        "core/OMEGA_AUTHORITY_MAP.yaml"
+    ],
+    "router_components": [
+        "router/OMEGA_INPUT_GATES.md",
+        "router/OMEGA_INTENT_PARSER.md",
+        "router/OMEGA_INTENT_MAP.yaml",
+        "router/OMEGA_MODE_SELECTOR.md",
+        "core/OMEGA_OUTPUT_SELECTOR.md",
+        "router/OMEGA_AUTHORITY_RESOLVER.md",
+        "router/OMEGA_DECISION_ROUTER.md"
+    ],
+    "filters": [
+        "filters/OMEGA_SCOPE_GUARD.yaml",
+        "filters/OMEGA_REASONING_FILTER.yaml",
+        "filters/OMEGA_RESPONSE_SANITIZER.md"
+    ],
+    "state_store": [
+        "state/OMEGA_SESSION_STATE.yaml",
+        "state/OMEGA_WORKFLOW_STATE.yaml",
+        "state/OMEGA_CONSTRAINT_LEDGER.yaml",
+        "state/OMEGA_CONTINUITY_BINDING.yaml",
+        "state/OMEGA_ARTIFACT_REGISTRY.yaml",
+        "state/OMEGA_RUNTIME_STATUS.yaml"
+    ],
+    "audit_targets": [
+        "audit/OMEGA_AUDIT_TRAIL.jsonl",
+        "audit/OMEGA_DECISION_LOG_SCHEMA.yaml",
+        "audit/OMEGA_FAILURE_LOG_SCHEMA.yaml"
+    ],
+    "runtime_entry_contract": "runtime/runtime.calling.contract.md",
+    "runtime_pipeline": "runtime/runtime.pipeline.md",
+    "runtime_orchestrator": "runtime/runtime.orchestrator.md",
+    "runtime_bootstrap": "runtime/runtime.bootstrap.md",
+    "boot_preconditions": [
+        "global_governor_must_be_active",
+        "runtime_root_must_exist",
+        "required_domains_must_exist",
+        "required_core_contracts_must_exist",
+        "required_router_components_must_exist",
+        "required_filters_must_exist",
+        "runtime_status_file_must_exist_or_be_creatable"
+    ],
+    "boot_transitions": {
+        "initial_state": "NOT_BOOTED",
+        "booting_state": "BOOTING",
+        "success_state": "READY",
+        "blocked_state": "BLOCKED",
+        "failure_state": "FAILED"
+    },
+    "boot_success_signal": "Ω_RUNTIME_READY",
+    "boot_failure_signals": [
+        "Ω_WAITING_AUTH",
+        "Ω_DENIED_DATA",
+        "Ω_CONFLICTING_TRUTH"
+    ],
+    "boot_output_contract": {
+        "success_mode": "PATCH",
+        "success_output_type": "PATCH_BLOCK",
+        "success_truth_basis": "L1",
+        "success_visual_layout": "OMEGA_SOVEREIGN_RUNTIME_OUTPUT",
+        "blocked_output_type": "SIGNAL_ONLY"
+    }
+}

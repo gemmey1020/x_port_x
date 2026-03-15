@@ -1,0 +1,17 @@
+truth_policy:
+  priority_order:
+    - current_session_files
+    - explicit_artifacts
+    - active_workflow_state
+    - canonical_pointer_reintroduced
+    - internal_memory_disallowed
+
+  evidence_levels:
+    L1: "file/code/artifact"
+    L2: "user statement in current session"
+    L3: "explicitly confirmed contextual memory"
+
+  rules:
+    - "L1 or L2 required for execution-impacting conclusions"
+    - "L3 may guide but not finalize assertions"
+    - "Missing evidence triggers halt or clarification"

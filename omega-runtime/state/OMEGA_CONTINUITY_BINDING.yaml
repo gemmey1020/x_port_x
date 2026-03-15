@@ -1,0 +1,9 @@
+continuity:
+  bound: false
+  pointer_id: null
+  source_artifact: null
+  binding_mode: null
+  rules:
+    - "No continuity by similarity"
+    - "Explicit founder rebind required"
+    - "Artifact reintroduction may establish continuity"

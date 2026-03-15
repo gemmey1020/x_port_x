@@ -1,0 +1,182 @@
+output_contracts:
+  version: "3.0"
+
+  visual_standard: "OMEGA_SOVEREIGN_RUNTIME_OUTPUT"
+
+  structured_layout:
+    non_signal_required_sections:
+      - omega-header
+      - omega-runtime
+      - omega-domains
+      - omega-execution
+      - omega-result
+
+    blocked_signal_behavior:
+      signal_only_when_blocked: true
+      render_visual_sections_when_blocked: false
+
+    section_order_is_mandatory: true
+    duplicate_header_forbidden: true
+    prose_between_sections_forbidden: true
+
+  visual_identity:
+    header_block:
+      required: true
+      block_name: omega-header
+      must_appear_first: true
+      canonical_header:
+        - "╔════════════════════════════════════════════════════════════════════╗"
+        - "║ Ω OMEGA RUNTIME ENGINE                                           ║"
+        - "║ Sovereign Execution • Deterministic • Governed Output            ║"
+        - "╚════════════════════════════════════════════════════════════════════╝"
+
+    runtime_block:
+      required: true
+      block_name: omega-runtime
+      required_fields:
+        - State
+        - Integrity
+        - Runtime Root
+        - Runtime Mode
+      optional_fields:
+        - Boot Result
+
+    domains_block:
+      required: true
+      block_name: omega-domains
+      required_domain_entries:
+        - core
+        - profiles
+        - filters
+        - router
+        - state
+        - audit
+      allowed_markers:
+        - "✔"
+        - "⚠"
+        - "✖"
+
+    execution_block:
+      required: true
+      block_name: omega-execution
+      required_fields:
+        - Status
+        - Risk_Level
+        - Authority_Used
+        - Mode
+        - Output_Type
+        - Truth_Basis
+      optional_fields:
+        - Changes
+
+    result_block:
+      required: true
+      block_name: omega-result
+      must_contain_only_final_payload: true
+      must_not_repeat_execution_metadata: true
+      rtl_support:
+        language: AR
+        must_use_raw_html_div_wrapper: true
+        fenced_code_block_forbidden_for_rtl: true
+        omega_result_text_label_forbidden_before_div: true
+
+  output_types:
+
+    SIGNAL_ONLY:
+      schema: signal_only
+      visual_mode: signal_only
+      requires_visual_layout: false
+      requires_header_block: false
+      requires_runtime_block: false
+      requires_domains_block: false
+      requires_execution_block: false
+      requires_result_block: false
+
+    DIRECT_ANSWER:
+      schema: omega_visual_structured_answer
+      visual_mode: omega_multiblock
+      requires_visual_layout: true
+      requires_header_block: true
+      requires_runtime_block: true
+      requires_domains_block: true
+      requires_execution_block: true
+      requires_result_block: true
+
+    CODE_DIFF:
+      schema: omega_visual_structured_diff
+      visual_mode: omega_multiblock
+      requires_visual_layout: true
+      requires_header_block: true
+      requires_runtime_block: true
+      requires_domains_block: true
+      requires_execution_block: true
+      requires_result_block: true
+
+    PATCH_BLOCK:
+      schema: omega_visual_structured_patch
+      visual_mode: omega_multiblock
+      requires_visual_layout: true
+      requires_header_block: true
+      requires_runtime_block: true
+      requires_domains_block: true
+      requires_execution_block: true
+      requires_result_block: true
+
+    REVIEW_REPORT:
+      schema: omega_visual_structured_review
+      visual_mode: omega_multiblock
+      requires_visual_layout: true
+      requires_header_block: true
+      requires_runtime_block: true
+      requires_domains_block: true
+      requires_execution_block: true
+      requires_result_block: true
+
+    EXECUTION_PLAN:
+      schema: omega_visual_structured_plan
+      visual_mode: omega_multiblock
+      requires_visual_layout: true
+      requires_header_block: true
+      requires_runtime_block: true
+      requires_domains_block: true
+      requires_execution_block: true
+      requires_result_block: true
+
+  rendering_rules:
+    inline_schema_forbidden: true
+    mixed_output_types_forbidden: true
+    chain_of_thought_forbidden: true
+    decorative_narration_forbidden: true
+    one_line_execution_schema_forbidden: true
+    repeated_execution_metadata_forbidden: true
+    random_section_reordering_forbidden: true
+
+  formatting_rules:
+    fixed_width_preferred: true
+    aligned_labels_required: true
+    divider_lines_allowed: true
+    box_drawing_allowed: true
+    compact_symbolic_markers_allowed: true
+    premium_console_aesthetic_required: true
+
+  canonical_non_signal_pattern:
+    - omega-header
+    - omega-runtime
+    - omega-domains
+    - omega-execution
+    - omega-result
+
+  signal_contract:
+    allowed_blocking_signals:
+      - "Ω_IDLE"
+      - "Ω_INSUFFICIENT_DATA"
+      - "Ω_DENIED_SPECULATION"
+      - "Ω_DENIED_SCOPE"
+      - "Ω_WAITING_AUTH"
+      - "Ω_DENIED_DATA"
+      - "Ω_READONLY_MODE"
+      - "Ω_CONFLICTING_TRUTH"
+      - "Ω_CONFLICTING_INTENT"
+
+    signal_only_must_contain_only_signal: true
+    explanation_forbidden_by_default: true

@@ -1,0 +1,12 @@
+session:
+  session_id: "omega-session-002"
+  workflow_state: "IDLE"
+  mode: null
+  authority_used: "NONE"
+  truth_basis: null
+  output_type: null
+  clarification_used: false
+  active_profile: "founder"
+  active_scope: []
+  continuity_pointer: null
+  last_signal: null

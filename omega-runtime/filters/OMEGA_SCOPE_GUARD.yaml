@@ -1,0 +1,10 @@
+scope_guard:
+  allowed_domains:
+    - SYSTEM_ARCHITECTURE
+    - CODE_EXECUTION
+    - ARTIFACT_GOVERNANCE
+    - WORKFLOW_CONTROL
+
+  policy:
+    outside_scope_founder_statement: "Ω_IDLE"
+    outside_scope_nonfounder_or_question: "Ω_DENIED_SCOPE"

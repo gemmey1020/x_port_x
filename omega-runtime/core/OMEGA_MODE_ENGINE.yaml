@@ -1,0 +1,124 @@
+mode_engine:
+  version: "2.0"
+
+  modes:
+
+    ANALYZE:
+      description: "Read-only bounded analysis"
+      mutates_artifacts: false
+      default_output: DIRECT_ANSWER
+      visual_contract: omega_multiblock
+      allowed_actions:
+        - explain
+        - clarify
+        - summarize
+        - analyze
+      blocked_actions:
+        - patch
+        - rewrite
+        - mutate
+
+    REVIEW:
+      description: "Validation and audit without mutation"
+      mutates_artifacts: false
+      default_output: REVIEW_REPORT
+      visual_contract: omega_multiblock
+      allowed_actions:
+        - validate
+        - review
+        - audit
+        - verify
+      blocked_actions:
+        - patch
+        - rewrite
+        - mutate
+
+    DIFF:
+      description: "Minimal scoped change request"
+      mutates_artifacts: true
+      default_output: CODE_DIFF
+      visual_contract: omega_multiblock
+      allowed_actions:
+        - propose_minimal_changes
+        - produce_diff
+      blocked_actions:
+        - full_rewrite_unless_explicit
+
+    PATCH:
+      description: "Executable patch-ready content"
+      mutates_artifacts: true
+      default_output: PATCH_BLOCK
+      visual_contract: omega_multiblock
+      allowed_actions:
+        - patch
+        - fix
+        - replace_block
+      blocked_actions:
+        - full_scope_expansion
+        - hidden_refactor
+
+    FREEZE:
+      description: "Freeze active scope and constraints"
+      mutates_artifacts: false
+      default_output: EXECUTION_PLAN
+      visual_contract: omega_multiblock
+      allowed_actions:
+        - lock_scope
+        - lock_parameters
+        - preserve_constraints
+      blocked_actions:
+        - add_new_scope_items_unless_explicit
+
+    VOID:
+      description: "Clear immediate non-canonical working state"
+      mutates_artifacts: false
+      default_output: DIRECT_ANSWER
+      visual_contract: omega_multiblock
+      authority_required: FOUNDER
+      allowed_actions:
+        - clear_working_state
+      blocked_actions:
+        - clear_canonical_bindings
+        - clear_global_constraints
+
+    TRACE:
+      description: "Expose bounded operational diagnostics without reasoning leakage"
+      mutates_artifacts: false
+      default_output: DIRECT_ANSWER
+      visual_contract: omega_multiblock
+      allowed_actions:
+        - show_runtime_status
+        - show_gate_results
+        - show_blocking_reason
+      blocked_actions:
+        - expose_chain_of_thought
+        - expose_hidden_reasoning
+
+  selection_priority:
+    - explicit_trigger
+    - requested_output_type_lock
+    - parsed_intent
+    - workflow_state
+    - safest_valid_mode
+
+  mode_resolution_rules:
+    if_trigger_freeze: FREEZE
+    if_trigger_void: VOID
+    if_trigger_sys_debug: TRACE
+    if_intent_review: REVIEW
+    if_intent_patch: PATCH
+    if_intent_diff: DIFF
+    if_intent_question: ANALYZE
+    if_no_safe_match: ANALYZE
+
+  safety_rules:
+    - if_mode_requires_mutation_and_permission_is_not_explicit_then_signal_Ω_READONLY_MODE
+    - if_mode_requires_artifact_and_artifact_missing_then_signal_Ω_WAITING_AUTH
+    - if_mode_conflicts_with_truth_policy_then_signal_Ω_DENIED_DATA
+    - if_mode_conflicts_with_authority_constraints_then_signal_Ω_DENIED_DATA
+
+  finalization_rules:
+    must_select_exactly_one_mode: true
+    must_select_matching_output_type: true
+    must_not_mix_modes: true
+    must_select_visual_contract: true

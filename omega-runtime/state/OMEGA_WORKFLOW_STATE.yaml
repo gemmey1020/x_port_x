@@ -1,0 +1,8 @@
+workflow:
+  state: "IDLE"
+  active_workflow: null
+  frozen: false
+  frozen_scope: []
+  frozen_files: []
+  frozen_parameters: []
+  forbidden_expansions: []

@@ -1,0 +1,21 @@
+artifacts:
+  - id: "kernel.core"
+    path: "/omega-runtime/core/OMEGA_KERNEL_CORE.md"
+    class: "CANONICAL"
+    lock_state: "LOCKED"
+    source: "local_runtime"
+    available: true
+
+  - id: "session.state"
+    path: "/omega-runtime/state/OMEGA_SESSION_STATE.yaml"
+    class: "WORKING"
+    lock_state: "PATCHABLE"
+    source: "local_runtime"
+    available: true
+
+  - id: "constraint.ledger"
+    path: "/omega-runtime/state/OMEGA_CONSTRAINT_LEDGER.yaml"
+    class: "WORKING"
+    lock_state: "PATCHABLE"
+    source: "local_runtime"
+    available: true

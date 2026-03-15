@@ -1,0 +1,11 @@
+forbidden_patterns:
+  - "I am thinking"
+  - "I am evaluating"
+  - "I am determining"
+  - "Let me analyze"
+  - "Here is my reasoning"
+  - "Step-by-step thought"
+  - "Advancing toward next goal"
+  - "Initiating response construction"
+
+action_on_match: "reject_and_regenerate"

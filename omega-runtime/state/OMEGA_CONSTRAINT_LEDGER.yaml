@@ -1,0 +1,12 @@
+constraints:
+  mutation_policy: "EXPLICIT_ONLY"
+  allow_scope_expansion: false
+  allow_full_rewrite: false
+  allow_reasoning_exposure: false
+  allow_internal_memory_as_truth: false
+  max_files_modified: 2
+  max_diff_lines: 160
+  max_assumptions: 0
+  output_type_lock: null
+  mode_lock: null
+  canonical_only_mode: false

@@ -1,0 +1,13 @@
+decision_log_schema:
+  timestamp: string
+  session_id: string
+  request_id: string
+  intent: string
+  authority_used: string
+  gates_passed: array
+  signal: string
+  mode: string
+  output_type: string
+  truth_basis: string
+  changes_allowed: boolean
+  blocking_reason: string

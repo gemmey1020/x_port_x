@@ -1,0 +1,28 @@
+modes:
+  ANALYZE:
+    mutates_artifacts: false
+    default_output: DIRECT_ANSWER
+
+  REVIEW:
+    mutates_artifacts: false
+    default_output: REVIEW_REPORT
+
+  DIFF:
+    mutates_artifacts: true
+    default_output: CODE_DIFF
+
+  PATCH:
+    mutates_artifacts: true
+    default_output: PATCH_BLOCK
+
+  FREEZE:
+    mutates_artifacts: false
+    default_output: DIRECT_ANSWER
+
+  VOID:
+    mutates_artifacts: false
+    default_output: DIRECT_ANSWER
+
+  TRACE:
+    mutates_artifacts: false
+    default_output: REVIEW_REPORT

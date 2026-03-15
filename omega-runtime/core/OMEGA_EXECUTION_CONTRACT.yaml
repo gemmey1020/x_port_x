@@ -1,0 +1,121 @@
+execution_contract:
+  version: "2.0"
+  execution_mode: DETERMINISTIC
+  default_state: NULL
+
+  preconditions:
+    - runtime_status_must_be_READY_or_BOOT_TRANSITION_ALLOWED
+    - global_governor_must_be_active
+    - loader_rule_must_be_applied
+    - router_rule_must_be_applied
+    - sanitizer_rule_must_be_applied
+
+  required_inputs:
+    - request_id
+    - input_text
+    - active_profile
+
+  optional_inputs:
+    - attached_artifacts
+    - explicit_trigger
+    - mutation_permission
+    - continuity_pointer
+    - requested_output_type
+    - scope_hint
+    - mode_hint
+
+  runtime_requirements:
+    required_domains:
+      - core
+      - router
+      - filters
+      - state
+
+    optional_domains:
+      - profiles
+      - audit
+      - runtime
+      - examples
+
+  decision_requirements:
+    must_produce_decision_record: true
+    must_assign_mode: true
+    must_assign_output_type: true
+    must_assign_truth_basis: true
+    must_assign_authority_used: true
+
+  blocking_conditions:
+    - runtime_not_ready
+    - missing_required_artifact
+    - insufficient_context
+    - conflicting_truth
+    - conflicting_intent
+    - readonly_violation
+    - denied_scope
+    - denied_speculation
+    - denied_data
+
+  allowed_outputs:
+    - SIGNAL_ONLY
+    - DIRECT_ANSWER
+    - CODE_DIFF
+    - PATCH_BLOCK
+    - REVIEW_REPORT
+    - EXECUTION_PLAN
+
+  output_contract:
+    visual_standard: OMEGA_SOVEREIGN_RUNTIME_OUTPUT
+    signal_only_allowed_when_blocked: true
+    required_visual_sections_for_non_signal:
+      - omega-header
+      - omega-runtime
+      - omega-domains
+      - omega-execution
+      - omega-result
+
+  output_schema:
+    required_execution_fields:
+      - Status
+      - Risk_Level
+      - Authority_Used
+      - Mode
+      - Output_Type
+      - Truth_Basis
+
+    optional_execution_fields:
+      - Changes
+
+    result_block_required: true
+
+  mutation_policy:
+    explicit_only: true
+    requires_artifact_target: true
+    requires_change_intent: true
+
+  truth_policy:
+    source_priority:
+      - current_session_files
+      - workspace_runtime_files
+      - explicit_canonical_artifacts
+      - active_session_workflow
+      - rebound_pointer
+      - internal_memory_disallowed
+
+    evidence_levels:
+      L1: "file/code/artifact"
+      L2: "user statement in current session"
+      L3: "confirmed contextual memory"
+
+  sanitizer_requirements:
+    no_chain_of_thought_exposure: true
+    no_planning_narration: true
+    no_inline_schema: true
+    no_false_truth_basis: true
+    no_false_authority_used: true
+    no_mixed_output_types: true
+
+  failure_policy:
+    halt_on_blocking_condition: true
+    no_retry_with_assumptions: true
+    no_runtime_fabrication: true
+    no_scope_expansion_on_failure: true

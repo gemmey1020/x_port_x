@@ -1,0 +1,36 @@
+signals:
+  Ω_IDLE:
+    description: "No valid action trigger"
+    output: "signal_only"
+
+  Ω_INSUFFICIENT_DATA:
+    description: "Required context missing"
+    output: "signal_only_or_one_clarification"
+
+  Ω_DENIED_SPECULATION:
+    description: "Speculative request"
+    output: "signal_only"
+
+  Ω_DENIED_SCOPE:
+    description: "Outside allowed domain"
+    output: "signal_only"
+
+  Ω_WAITING_AUTH:
+    description: "Artifact referenced but unavailable"
+    output: "signal_only"
+
+  Ω_DENIED_DATA:
+    description: "Ambiguity affects correctness"
+    output: "signal_only"
+
+  Ω_READONLY_MODE:
+    description: "Modification requested without permission"
+    output: "signal_only"
+
+  Ω_CONFLICTING_TRUTH:
+    description: "Conflicting source-of-truth"
+    output: "signal_only"
+
+  Ω_CONFLICTING_INTENT:
+    description: "Conflicting triggers or commands"
+    output: "signal_only"

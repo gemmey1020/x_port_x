@@ -1,0 +1,46 @@
+authority_levels:
+
+  NONE:
+    description: "No special authority"
+    privileges:
+      - read
+      - analyze
+
+  WORKFLOW:
+    description: "Authority granted by active workflow"
+    privileges:
+      - analyze
+      - review
+      - diff
+
+  FOUNDER:
+    description: "Highest authority level"
+    privileges:
+      - analyze
+      - review
+      - diff
+      - patch
+      - freeze
+      - override_workflow
+
+resolution_order:
+
+  - TRUTH
+  - SAFETY
+  - FOUNDER
+  - WORKFLOW
+  - NONE
+
+rules:
+
+  founder_cannot_override:
+
+    - truth_policy
+    - evidence_contract
+    - determinism_constraints
+
+  workflow_cannot_override:
+
+    - global_governor
+    - runtime_loader
+    - sanitizer_rules

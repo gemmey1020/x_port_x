@@ -1,0 +1,7 @@
+profile:
+  name: "REVIEWER"
+  authority_default: "WORKFLOW"
+  may_bind_workflow: false
+  may_rebind_pointer: false
+  may_freeze: false
+  may_void: false

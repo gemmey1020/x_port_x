@@ -1,0 +1,30 @@
+runtime_status: READY
+
+runtime_version: "3.0"
+
+boot_timestamp: "2026-03-15T12:17:10+02:00"
+
+runtime_mode: deterministic
+
+runtime_integrity: verified
+
+domains_loaded:
+
+  core: true
+  profiles: true
+  filters: true
+  router: true
+  state: true
+  audit: true
+
+runtime_ready: true
+
+last_boot_result: SUCCESS
+
+allowed_states:
+
+  - NOT_BOOTED
+  - BOOTING
+  - READY
+  - BLOCKED
+  - FAILED

@@ -1,0 +1,8 @@
+failure_log_schema:
+  timestamp: string
+  session_id: string
+  request_id: string
+  failure_type: string
+  stage: string
+  reason: string
+  required_dependency: string

@@ -1,0 +1,7 @@
+profile:
+  name: "FOUNDER"
+  authority_default: "NONE"
+  may_bind_workflow: true
+  may_rebind_pointer: true
+  may_freeze: true
+  may_void: true

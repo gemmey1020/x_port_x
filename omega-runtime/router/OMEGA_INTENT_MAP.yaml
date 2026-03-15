@@ -1,0 +1,151 @@
+intent_map:
+  version: "2.0"
+
+  THINK_ALOUD:
+    description: "User is thinking aloud without requesting execution"
+    patterns:
+      - "I am thinking"
+      - "just thinking aloud"
+      - "let me think"
+      - "I am considering"
+      - "مجرد بفكر"
+      - "بفكر بصوت عالي"
+    default_mode: ANALYZE
+    default_output: DIRECT_ANSWER
+    visual_contract: omega_multiblock
+    requires_mutation: false
+    requires_artifact: false
+    signal_if_no_action: Ω_IDLE
+
+  DIRECT_QUESTION:
+    description: "User asks a bounded question requiring direct answer"
+    patterns:
+      - "what"
+      - "why"
+      - "how"
+      - "explain"
+      - "clarify"
+      - "اشرح"
+      - "وضح"
+      - "ليه"
+      - "ازاي"
+    default_mode: ANALYZE
+    default_output: DIRECT_ANSWER
+    visual_contract: omega_multiblock
+    requires_mutation: false
+    requires_artifact: false
+
+  REVIEW_ORDER:
+    description: "User requests validation, review, or audit"
+    patterns:
+      - "review"
+      - "validate"
+      - "audit"
+      - "check"
+      - "راجع"
+      - "دقق"
+      - "شيك"
+    default_mode: REVIEW
+    default_output: REVIEW_REPORT
+    visual_contract: omega_multiblock
+    requires_mutation: false
+    requires_artifact: true
+
+  DIFF_ORDER:
+    description: "User requests minimal changes only"
+    patterns:
+      - "diff"
+      - "minimal change"
+      - "small update"
+      - "عدّل جزء"
+      - "تعديل بسيط"
+      - "فرق"
+    default_mode: DIFF
+    default_output: CODE_DIFF
+    visual_contract: omega_multiblock
+    requires_mutation: true
+    requires_artifact: true
+
+  PATCH_ORDER:
+    description: "User requests executable patch or direct code change"
+    patterns:
+      - "patch"
+      - "fix this"
+      - "update this file"
+      - "edit this file"
+      - "اصلح"
+      - "عدّل الملف"
+      - "حدّث الملف"
+    default_mode: PATCH
+    default_output: PATCH_BLOCK
+    visual_contract: omega_multiblock
+    requires_mutation: true
+    requires_artifact: true
+
+  FREEZE_ORDER:
+    description: "User requests scope freeze"
+    patterns:
+      - "/freeze"
+      - "freeze"
+      - "lock scope"
+      - "جمّد"
+      - "اقفل السكوب"
+    default_mode: FREEZE
+    default_output: EXECUTION_PLAN
+    visual_contract: omega_multiblock
+    requires_mutation: false
+    requires_artifact: false
+
+  VOID_ORDER:
+    description: "User requests clearing immediate working state"
+    patterns:
+      - "/void"
+      - "void"
+      - "clear working memory"
+      - "امسح الحالة الحالية"
+      - "فضّي الحالة"
+    default_mode: VOID
+    default_output: DIRECT_ANSWER
+    visual_contract: omega_multiblock
+    requires_mutation: false
+    requires_artifact: false
+    authority_required: FOUNDER
+
+  TRACE_ORDER:
+    description: "User requests debug/trace mode"
+    patterns:
+      - "/sys-debug"
+      - "trace"
+      - "debug mode"
+      - "تتبع"
+      - "ديبج"
+    default_mode: TRACE
+    default_output: DIRECT_ANSWER
+    visual_contract: omega_multiblock
+    requires_mutation: false
+    requires_artifact: false
+
+  BOOT_ORDER:
+    description: "User requests runtime boot or runtime initialization"
+    patterns:
+      - "boot omega runtime"
+      - "BOOT OMEGA RUNTIME"
+      - "initialize runtime"
+      - "start omega runtime"
+      - "شغّل الرانتايم"
+      - "ابدأ الرانتيم"
+    default_mode: PATCH
+    default_output: PATCH_BLOCK
+    visual_contract: omega_multiblock
+    requires_mutation: true
+    requires_artifact: true
+
+fallback_rules:
+  no_match:
+    signal: Ω_INSUFFICIENT_DATA
+
+  conflicting_matches:
+    signal: Ω_CONFLICTING_INTENT
+
+  outside_scope:
+    signal: Ω_DENIED_SCOPE
