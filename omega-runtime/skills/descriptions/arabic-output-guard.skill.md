@@ -38,7 +38,7 @@ Formats Arabic or mixed Arabic-English final output for generic Codex text surfa
 
 ## Important Source Artifacts
 - `/home/gemmey1020/.codex/skills/.system/arabic-output-guard/SKILL.md`
-- `/home/gemmey1020/.codex/skills/self-learn/scripts/format_surface_output.py`
+- Shared formatter dependency referenced by the source skill: `/home/gemmey1020/.codex/skills/self-learn/scripts/format_surface_output.py`
 
 ## Notes
 - The source skill defaults to markdown-safe output on generic LTR surfaces.

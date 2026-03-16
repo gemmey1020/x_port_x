@@ -31,7 +31,7 @@ Maps a validated `portfolio_spectrum` payload into schema-ready mapping targets 
 - Produces a compact `schema_mapping` payload plus missing-field and handoff information.
 
 ## Constraints And Non-Goals
-- Must block with `Omega_INSUFFICIENT_DATA` semantics when required evidence is missing.
+- Must block with `Ω_INSUFFICIENT_DATA` semantics when required evidence is missing.
 - Mapping only; no JSON-LD generation and no invented values.
 
 ## Important Source Artifacts
