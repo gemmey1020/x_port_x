@@ -15,11 +15,28 @@ SUPPORTED_TIERS = ("lite", "default", "premium")
 SUPPORTED_TARGETS = ("LocalBusiness", "ProfessionalService")
 REQUIRED_BRIEF_FIELDS = ("trade_type", "primary_locality", "service_scope", "whatsapp_target")
 STAGE_ORDER = (
-    ("portfolio-spectrum-builder", "portfolio", "portfolio_output"),
-    ("schema-mapper", "mapping", "schema_mapping_output"),
-    ("jsonld-generator", "jsonld", "jsonld_output"),
+    ("portfolio-spectrum-builder", "portfolio", "portfolio_output", True),
+    ("schema-mapper", "mapping", "schema_mapping_output", True),
+    ("jsonld-generator", "jsonld", "jsonld_output", True),
+    ("landing-generator", "landing", "landing_output", False),
 )
 ALLOWED_BLOCK_SIGNALS = {"Ω_INSUFFICIENT_DATA"}
+ASSET_GAP_TOKENS = ("gallery_assets", "video_asset_or_video_slot", "review_items")
+LANDING_FIELD_ORDER = (
+    "trade_type",
+    "business_label",
+    "primary_locality",
+    "service_scope",
+    "whatsapp_target",
+    "differentiators",
+    "trust_signals",
+    "work_hours",
+    "gallery_assets",
+    "video_asset",
+    "video_url",
+    "review_items",
+)
+LANDING_NON_ASSET_INPUT_ORDER = ("business_label", "work_hours", "differentiators", "trust_signals")
 
 
 def load_document(path: Path) -> Any:
@@ -42,6 +59,16 @@ def is_non_empty_str(value: Any) -> bool:
 
 def is_non_empty_list(value: Any) -> bool:
     return isinstance(value, list) and len(value) > 0
+
+
+def dedupe_preserve(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value not in seen:
+            seen.add(value)
+            result.append(value)
+    return result
 
 
 def is_usable_whatsapp_target(value: Any) -> bool:
@@ -119,6 +146,332 @@ def diff_paths(left: Any, right: Any, prefix: str = "") -> list[str]:
     if left != right:
         return [prefix or "$"]
     return []
+
+
+def ordered_tiers(tiers: set[str] | list[str]) -> list[str]:
+    tier_set = set(tiers)
+    return [tier for tier in SUPPORTED_TIERS if tier in tier_set]
+
+
+def resolved_slot(slot_id: str, value: Any, stage: str, field: str) -> dict[str, Any]:
+    return {
+        "slot_id": slot_id,
+        "status": "resolved",
+        "value": value,
+        "source": {
+            "stage": stage,
+            "field": field,
+        },
+    }
+
+
+def unresolved_slot(slot_id: str, required_input: str) -> dict[str, Any]:
+    return {
+        "slot_id": slot_id,
+        "status": "unresolved",
+        "required_input": required_input,
+    }
+
+
+def section_slot_map(section_payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    slots = section_payload.get("slots")
+    if not isinstance(slots, list):
+        return {}
+    return {
+        slot["slot_id"]: slot
+        for slot in slots
+        if isinstance(slot, dict) and is_non_empty_str(slot.get("slot_id"))
+    }
+
+
+def build_expected_section(section_id: str, brief: dict[str, Any]) -> dict[str, Any]:
+    service_scope = brief.get("service_scope")
+    service_items = service_scope if isinstance(service_scope, list) else []
+    trust_signals = brief.get("trust_signals")
+    trust_items = trust_signals if isinstance(trust_signals, list) else []
+    differentiators = brief.get("differentiators")
+    differentiator_items = differentiators if isinstance(differentiators, list) else []
+    review_items = brief.get("review_items")
+    reviews = review_items if isinstance(review_items, list) else []
+    gallery_assets = brief.get("gallery_assets")
+    gallery_items = gallery_assets if isinstance(gallery_assets, list) else []
+    work_hours = brief.get("work_hours")
+    business_label = brief.get("business_label")
+    video_asset = brief.get("video_asset")
+    video_url = brief.get("video_url")
+
+    if section_id == "hero":
+        slots = [
+            resolved_slot("trade_type", brief.get("trade_type"), "trade_brief", "trade_type"),
+            resolved_slot("business_label", business_label, "trade_brief", "business_label")
+            if is_non_empty_str(business_label)
+            else unresolved_slot("business_label", "business_label"),
+            resolved_slot("primary_locality", brief.get("primary_locality"), "trade_brief", "primary_locality"),
+            resolved_slot("primary_cta_ref", "primary", "landing_artifact", "cta.primary"),
+        ]
+        render_status = "ready" if is_non_empty_str(brief.get("trade_type")) and is_non_empty_str(brief.get("primary_locality")) and is_usable_whatsapp_target(brief.get("whatsapp_target")) else "withheld"
+        return {
+            "render_status": render_status,
+            "slot_order": ["trade_type", "business_label", "primary_locality", "primary_cta_ref"],
+            "slots": slots,
+        }
+
+    if section_id == "service-summary":
+        service_preview = service_items[:3]
+        slot = (
+            resolved_slot("service_scope_preview", service_preview, "trade_brief", "service_scope")
+            if service_preview
+            else unresolved_slot("service_scope_preview", "service_scope")
+        )
+        return {
+            "render_status": "ready" if service_preview else "withheld",
+            "slot_order": ["service_scope_preview"],
+            "slots": [slot],
+        }
+
+    if section_id == "service-list":
+        slot = (
+            resolved_slot("service_items", service_items, "trade_brief", "service_scope")
+            if service_items
+            else unresolved_slot("service_items", "service_scope")
+        )
+        return {
+            "render_status": "ready" if service_items else "withheld",
+            "slot_order": ["service_items"],
+            "slots": [slot],
+        }
+
+    if section_id == "trust-strip":
+        trust_slot = (
+            resolved_slot("trust_signals", trust_items, "trade_brief", "trust_signals")
+            if trust_items
+            else unresolved_slot("trust_signals", "trust_signals")
+        )
+        differentiator_slot = (
+            resolved_slot("differentiators", differentiator_items, "trade_brief", "differentiators")
+            if differentiator_items
+            else unresolved_slot("differentiators", "differentiators")
+        )
+        render_status = "ready" if trust_items or differentiator_items else "withheld"
+        return {
+            "render_status": render_status,
+            "slot_order": ["trust_signals", "differentiators"],
+            "slots": [trust_slot, differentiator_slot],
+        }
+
+    if section_id == "hours":
+        slot = (
+            resolved_slot("work_hours", work_hours, "trade_brief", "work_hours")
+            if is_non_empty_str(work_hours)
+            else unresolved_slot("work_hours", "work_hours")
+        )
+        return {
+            "render_status": "ready" if is_non_empty_str(work_hours) else "withheld",
+            "slot_order": ["work_hours"],
+            "slots": [slot],
+        }
+
+    if section_id == "whatsapp-cta":
+        return {
+            "render_status": "ready" if is_usable_whatsapp_target(brief.get("whatsapp_target")) else "withheld",
+            "slot_order": ["primary_cta_ref"],
+            "slots": [resolved_slot("primary_cta_ref", "primary", "landing_artifact", "cta.primary")],
+        }
+
+    if section_id == "footer-contact":
+        return {
+            "render_status": "ready" if is_usable_whatsapp_target(brief.get("whatsapp_target")) else "withheld",
+            "slot_order": ["primary_cta_ref", "primary_locality"],
+            "slots": [
+                resolved_slot("primary_cta_ref", "primary", "landing_artifact", "cta.primary"),
+                resolved_slot("primary_locality", brief.get("primary_locality"), "trade_brief", "primary_locality"),
+            ],
+        }
+
+    if section_id == "gallery":
+        slot = (
+            resolved_slot("gallery_assets", gallery_items, "trade_brief", "gallery_assets")
+            if gallery_items
+            else unresolved_slot("gallery_assets", "gallery_assets")
+        )
+        return {
+            "render_status": "ready" if gallery_items else "withheld",
+            "slot_order": ["gallery_assets"],
+            "slots": [slot],
+        }
+
+    if section_id == "video-anchor":
+        if is_non_empty_str(video_asset):
+            slot = resolved_slot("video_asset", video_asset, "trade_brief", "video_asset")
+            render_status = "ready"
+        elif is_non_empty_str(video_url):
+            slot = resolved_slot("video_asset", video_url, "trade_brief", "video_url")
+            render_status = "ready"
+        else:
+            slot = unresolved_slot("video_asset", "video_asset_or_video_slot")
+            render_status = "withheld"
+        return {
+            "render_status": render_status,
+            "slot_order": ["video_asset"],
+            "slots": [slot],
+        }
+
+    if section_id == "reviews":
+        slot = (
+            resolved_slot("review_items", reviews, "trade_brief", "review_items")
+            if reviews
+            else unresolved_slot("review_items", "review_items")
+        )
+        return {
+            "render_status": "ready" if reviews else "withheld",
+            "slot_order": ["review_items"],
+            "slots": [slot],
+        }
+
+    raise ValueError(f"Unsupported landing section {section_id}")
+
+
+def build_expected_landing_output(
+    brief: dict[str, Any],
+    portfolio_output: dict[str, Any],
+    schema_mapping_output: dict[str, Any],
+    jsonld_output: dict[str, Any],
+) -> dict[str, Any]:
+    portfolio_spectrum = portfolio_output.get("portfolio_spectrum")
+    if not isinstance(portfolio_spectrum, dict) or not portfolio_spectrum:
+        raise ValueError("portfolio_output.portfolio_spectrum must be a non-empty object")
+
+    schema_mapping = schema_mapping_output.get("schema_mapping")
+    if not isinstance(schema_mapping, dict) or not schema_mapping:
+        raise ValueError("schema_mapping_output.schema_mapping must be a non-empty object")
+
+    jsonld_payloads = jsonld_output.get("jsonld_payloads")
+    if not isinstance(jsonld_payloads, dict) or not jsonld_payloads:
+        raise ValueError("jsonld_output.jsonld_payloads must be a non-empty object")
+
+    missing_inputs = portfolio_output.get("missing_inputs")
+    if not isinstance(missing_inputs, list):
+        raise ValueError("portfolio_output.missing_inputs must be a list")
+
+    portfolio_handoff = portfolio_output.get("implementation_handoff")
+    if not isinstance(portfolio_handoff, dict):
+        raise ValueError("portfolio_output.implementation_handoff must be an object")
+    content_gaps = portfolio_handoff.get("content_gaps")
+    if not isinstance(content_gaps, list):
+        raise ValueError("portfolio_output.implementation_handoff.content_gaps must be a list")
+
+    schema_missing = schema_mapping_output.get("missing_required_fields")
+    jsonld_missing = jsonld_output.get("missing_required_fields")
+    if not isinstance(schema_missing, list):
+        raise ValueError("schema_mapping_output.missing_required_fields must be a list")
+    if not isinstance(jsonld_missing, list):
+        raise ValueError("jsonld_output.missing_required_fields must be a list")
+
+    jsonld_handoff = jsonld_output.get("implementation_handoff")
+    if not isinstance(jsonld_handoff, dict):
+        raise ValueError("jsonld_output.implementation_handoff must be an object")
+    jsonld_unresolved = jsonld_handoff.get("unresolved_inputs")
+    if not isinstance(jsonld_unresolved, list):
+        raise ValueError("jsonld_output.implementation_handoff.unresolved_inputs must be a list")
+
+    landing_artifact: dict[str, Any] = {}
+    used_fields: set[str] = set()
+    unresolved_inputs_seen: list[str] = []
+    content_gaps_seen: list[str] = []
+    render_ready_tiers: list[str] = []
+
+    for tier in ordered_tiers(list(portfolio_spectrum.keys())):
+        tier_portfolio = portfolio_spectrum.get(tier)
+        if not isinstance(tier_portfolio, dict):
+            raise ValueError(f"portfolio_output.portfolio_spectrum.{tier} must be an object")
+        if tier not in schema_mapping:
+            raise ValueError(f"schema_mapping_output.schema_mapping.{tier} must exist")
+        tier_jsonld = jsonld_payloads.get(tier)
+        if not isinstance(tier_jsonld, dict) or not tier_jsonld:
+            raise ValueError(f"jsonld_output.jsonld_payloads.{tier} must be a non-empty object")
+
+        sections = tier_portfolio.get("sections")
+        if not is_non_empty_list(sections):
+            raise ValueError(f"portfolio_output.portfolio_spectrum.{tier}.sections must be a non-empty list")
+
+        cta_model = tier_portfolio.get("cta_model")
+        if not isinstance(cta_model, dict):
+            raise ValueError(f"portfolio_output.portfolio_spectrum.{tier}.cta_model must be an object")
+        if cta_model.get("primary") != "direct_whatsapp":
+            raise ValueError(f"portfolio_output.portfolio_spectrum.{tier}.cta_model.primary must be direct_whatsapp")
+        placements = cta_model.get("placements")
+        if not isinstance(placements, list):
+            raise ValueError(f"portfolio_output.portfolio_spectrum.{tier}.cta_model.placements must be a list")
+
+        planned_section_order = list(sections)
+        renderable_section_order: list[str] = []
+        tier_sections: dict[str, Any] = {}
+
+        for section_id in planned_section_order:
+            section_payload = build_expected_section(section_id, brief)
+            tier_sections[section_id] = section_payload
+            if section_payload["render_status"] == "ready":
+                renderable_section_order.append(section_id)
+
+            for slot in section_payload["slots"]:
+                if slot.get("status") == "resolved":
+                    source = slot.get("source")
+                    if isinstance(source, dict) and source.get("stage") == "trade_brief" and is_non_empty_str(source.get("field")):
+                        used_fields.add(source["field"])
+                elif slot.get("status") == "unresolved":
+                    required_input = slot.get("required_input")
+                    if required_input in ASSET_GAP_TOKENS:
+                        content_gaps_seen.append(required_input)
+                    elif is_non_empty_str(required_input):
+                        unresolved_inputs_seen.append(required_input)
+
+        used_fields.add("whatsapp_target")
+        if renderable_section_order:
+            render_ready_tiers.append(tier)
+
+        landing_artifact[tier] = {
+            "rendering_handoff": {
+                "locale": "ar-EG",
+                "direction": "rtl",
+                "mobile_first": True,
+                "renderer_mode": "structured_slots_only",
+                "planned_section_order": planned_section_order,
+                "renderable_section_order": renderable_section_order,
+            },
+            "cta": {
+                "primary": {
+                    "cta_id": "primary",
+                    "action": "direct_whatsapp",
+                    "target": brief.get("whatsapp_target"),
+                    "placements": placements,
+                }
+            },
+            "structured_data": {
+                "page_level_jsonld": tier_jsonld,
+            },
+            "sections": tier_sections,
+        }
+
+    landing_fields = [field for field in LANDING_FIELD_ORDER if field in used_fields]
+    missing_required_fields = dedupe_preserve(list(schema_missing) + list(jsonld_missing))
+    normalized_content_gaps = dedupe_preserve(list(content_gaps) + [gap for gap in ASSET_GAP_TOKENS if gap in content_gaps_seen])
+    normalized_unresolved_inputs = dedupe_preserve(
+        list(jsonld_unresolved) + [field for field in LANDING_NON_ASSET_INPUT_ORDER if field in unresolved_inputs_seen]
+    )
+
+    return {
+        "landing_artifact": landing_artifact,
+        "missing_inputs": list(missing_inputs),
+        "missing_required_fields": missing_required_fields,
+        "source_evidence": {
+            "landing_fields": landing_fields,
+        },
+        "implementation_handoff": {
+            "render_ready_tiers": render_ready_tiers,
+            "content_gaps": normalized_content_gaps,
+            "unresolved_inputs": normalized_unresolved_inputs,
+        },
+    }
 
 
 def validate_portfolio_output(
@@ -957,6 +1310,78 @@ def validate_jsonld_output(
     return meta
 
 
+def validate_landing_output(
+    brief: dict[str, Any],
+    portfolio_output: Any,
+    schema_mapping_output: Any,
+    jsonld_output: Any,
+    payload: Any,
+    failures: list[dict[str, Any]],
+) -> dict[str, Any]:
+    meta = {
+        "tiers": set(),
+        "missing_required_fields": set(),
+        "content_gaps": set(),
+        "unresolved_inputs": set(),
+        "payloads": {},
+    }
+    if not isinstance(payload, dict):
+        add_failure(failures, "landing.type", "landing_output must be an object", "landing_output")
+        return meta
+
+    landing_artifact = payload.get("landing_artifact")
+    if not isinstance(landing_artifact, dict) or not landing_artifact:
+        add_failure(
+            failures,
+            "landing.missing_artifact",
+            "landing_output.landing_artifact must be a non-empty object",
+            "landing_output.landing_artifact",
+        )
+        return meta
+
+    meta["tiers"] = set(landing_artifact.keys())
+    meta["payloads"] = landing_artifact
+
+    missing_required_fields = payload.get("missing_required_fields")
+    if isinstance(missing_required_fields, list):
+        meta["missing_required_fields"] = set(missing_required_fields)
+
+    handoff = payload.get("implementation_handoff")
+    if isinstance(handoff, dict):
+        if isinstance(handoff.get("content_gaps"), list):
+            meta["content_gaps"] = set(handoff["content_gaps"])
+        if isinstance(handoff.get("unresolved_inputs"), list):
+            meta["unresolved_inputs"] = set(handoff["unresolved_inputs"])
+
+    try:
+        expected_payload = build_expected_landing_output(
+            brief,
+            portfolio_output if isinstance(portfolio_output, dict) else {},
+            schema_mapping_output if isinstance(schema_mapping_output, dict) else {},
+            jsonld_output if isinstance(jsonld_output, dict) else {},
+        )
+    except ValueError as exc:
+        add_failure(
+            failures,
+            "landing.expected_build",
+            str(exc),
+            "landing_output",
+        )
+        return meta
+
+    diff_keys = diff_paths(payload, expected_payload, "landing_output")
+    if diff_keys:
+        for diff_key in diff_keys[:10]:
+            add_failure(
+                failures,
+                "landing.diff",
+                "landing_output does not match the expected deterministic landing artifact",
+                diff_key,
+            )
+
+    return meta
+
+
 def cross_stage_target_alignment(
     portfolio_meta: dict[str, Any] | None,
     mapping_meta: dict[str, Any] | None,
@@ -1030,6 +1455,7 @@ def cross_stage_gap_propagation(
     brief: dict[str, Any],
     mapping_meta: dict[str, Any] | None,
     jsonld_meta: dict[str, Any] | None,
+    landing_meta: dict[str, Any] | None,
     failures: list[dict[str, Any]],
 ) -> bool:
     start = len(failures)
@@ -1051,6 +1477,21 @@ def cross_stage_gap_propagation(
                 "business_label must remain unresolved across both downstream stages",
                 "jsonld_output.implementation_handoff.unresolved_inputs",
             )
+        if landing_meta:
+            if "business_label" not in landing_meta["missing_required_fields"]:
+                add_failure(
+                    failures,
+                    "cross.gap.business_label_landing",
+                    "business_label gap must propagate into landing_output.missing_required_fields",
+                    "landing_output.missing_required_fields",
+                )
+            if "business_label" not in landing_meta["unresolved_inputs"]:
+                add_failure(
+                    failures,
+                    "cross.gap.business_label_landing_unresolved",
+                    "business_label must remain unresolved in landing_output.implementation_handoff.unresolved_inputs",
+                    "landing_output.implementation_handoff.unresolved_inputs",
+                )
     return len(failures) == start
 
 
@@ -1058,6 +1499,7 @@ def cross_stage_no_invented_conditionals(
     brief: dict[str, Any],
     mapping_meta: dict[str, Any] | None,
     jsonld_meta: dict[str, Any] | None,
+    landing_meta: dict[str, Any] | None,
     failures: list[dict[str, Any]],
 ) -> bool:
     start = len(failures)
@@ -1107,6 +1549,57 @@ def cross_stage_no_invented_conditionals(
                             f"jsonld_output must not emit {hours_field} when work_hours is absent",
                             f"jsonld_output.jsonld_payloads.{tier}.{target}.{hours_field}",
                         )
+
+    if landing_meta:
+        payloads = landing_meta.get("payloads", {})
+        for tier, tier_payload in payloads.items():
+            if not isinstance(tier_payload, dict):
+                continue
+            sections = tier_payload.get("sections")
+            if not isinstance(sections, dict):
+                continue
+
+            if not business_label_present and isinstance(sections.get("hero"), dict):
+                business_slot = section_slot_map(sections["hero"]).get("business_label")
+                if isinstance(business_slot, dict) and business_slot.get("status") == "resolved":
+                    add_failure(
+                        failures,
+                        "cross.invented_name.landing",
+                        "landing_output must not resolve business_label when business_label is absent",
+                        f"landing_output.landing_artifact.{tier}.sections.hero.slots",
+                    )
+
+            if not work_hours_present and isinstance(sections.get("hours"), dict) and sections["hours"].get("render_status") == "ready":
+                add_failure(
+                    failures,
+                    "cross.invented_hours.landing",
+                    "landing_output must not mark hours ready when work_hours is absent",
+                    f"landing_output.landing_artifact.{tier}.sections.hours.render_status",
+                )
+
+            if not is_non_empty_list(brief.get("gallery_assets")) and isinstance(sections.get("gallery"), dict) and sections["gallery"].get("render_status") == "ready":
+                add_failure(
+                    failures,
+                    "cross.invented_gallery.landing",
+                    "landing_output must not mark gallery ready when concrete gallery_assets are absent",
+                    f"landing_output.landing_artifact.{tier}.sections.gallery.render_status",
+                )
+
+            if not (is_non_empty_str(brief.get("video_asset")) or is_non_empty_str(brief.get("video_url"))) and isinstance(sections.get("video-anchor"), dict) and sections["video-anchor"].get("render_status") == "ready":
+                add_failure(
+                    failures,
+                    "cross.invented_video.landing",
+                    "landing_output must not mark video-anchor ready when concrete video evidence is absent",
+                    f"landing_output.landing_artifact.{tier}.sections.video-anchor.render_status",
+                )
+
+            if not is_non_empty_list(brief.get("review_items")) and isinstance(sections.get("reviews"), dict) and sections["reviews"].get("render_status") == "ready":
+                add_failure(
+                    failures,
+                    "cross.invented_reviews.landing",
+                    "landing_output must not mark reviews ready when concrete review_items are absent",
+                    f"landing_output.landing_artifact.{tier}.sections.reviews.render_status",
+                )
     return len(failures) == start
 
 
@@ -1116,7 +1609,7 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
         "result": "fail",
         "case_id": "",
         "bundle_version": None,
-        "stage_results": {"portfolio": "skipped", "mapping": "skipped", "jsonld": "skipped"},
+        "stage_results": {"portfolio": "skipped", "mapping": "skipped", "jsonld": "skipped", "landing": "skipped"},
         "cross_stage_results": {
             "target_alignment": "pass",
             "resolved_value_integrity": "pass",
@@ -1156,7 +1649,7 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
 
     block_stage = expected.get("block_stage")
     expected_signal = expected.get("signal")
-    valid_block_stages = {stage_name for stage_name, _, _ in STAGE_ORDER}
+    valid_block_stages = {stage_name for stage_name, _, _, _ in STAGE_ORDER}
     if block_stage is not None and block_stage not in valid_block_stages:
         add_failure(
             failures,
@@ -1182,15 +1675,15 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
 
     block_index = None
     if block_stage is not None:
-        for index, (stage_name, _, _) in enumerate(STAGE_ORDER):
+        for index, (stage_name, _, _, _) in enumerate(STAGE_ORDER):
             if stage_name == block_stage:
                 block_index = index
                 break
 
-    for index, (stage_name, report_key, bundle_key) in enumerate(STAGE_ORDER):
+    for index, (stage_name, report_key, bundle_key, required_on_nonblocked) in enumerate(STAGE_ORDER):
         present = bundle_key in bundle and bundle[bundle_key] is not None
         if block_index is None:
-            if not present:
+            if required_on_nonblocked and not present:
                 add_failure(
                     failures,
                     f"bundle.{report_key}_missing",
@@ -1243,8 +1736,23 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
             jsonld_meta["payloads"] = bundle["jsonld_output"].get("jsonld_payloads", {})
         report["stage_results"]["jsonld"] = "pass" if len(failures) == start else "fail"
 
+    landing_meta = None
+    if bundle.get("landing_output") is not None:
+        start = len(failures)
+        landing_meta = validate_landing_output(
+            brief,
+            bundle.get("portfolio_output"),
+            bundle.get("schema_mapping_output"),
+            bundle.get("jsonld_output"),
+            bundle["landing_output"],
+            failures,
+        )
+        if isinstance(bundle["landing_output"], dict):
+            landing_meta["payloads"] = bundle["landing_output"].get("landing_artifact", {})
+        report["stage_results"]["landing"] = "pass" if len(failures) == start else "fail"
+
     if block_index is not None:
-        for index, (_, report_key, _) in enumerate(STAGE_ORDER):
+        for index, (_, report_key, _, _) in enumerate(STAGE_ORDER):
             if index >= block_index:
                 report["stage_results"][report_key] = "skipped"
 
@@ -1252,9 +1760,9 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
         report["cross_stage_results"]["target_alignment"] = "fail"
     if not cross_stage_resolved_value_integrity(brief, mapping_meta, failures):
         report["cross_stage_results"]["resolved_value_integrity"] = "fail"
-    if not cross_stage_gap_propagation(brief, mapping_meta, jsonld_meta, failures):
+    if not cross_stage_gap_propagation(brief, mapping_meta, jsonld_meta, landing_meta, failures):
         report["cross_stage_results"]["gap_propagation"] = "fail"
-    if not cross_stage_no_invented_conditionals(brief, mapping_meta, jsonld_meta, failures):
+    if not cross_stage_no_invented_conditionals(brief, mapping_meta, jsonld_meta, landing_meta, failures):
         report["cross_stage_results"]["no_invented_conditionals"] = "fail"
 
     if snapshot_bundle is not None:

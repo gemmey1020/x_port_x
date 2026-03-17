@@ -506,6 +506,564 @@ jsonld_output:
       - business_label
     next_jsonld_priority:
       - resolve_business_label
+landing_output:
+  landing_artifact:
+    lite:
+      rendering_handoff:
+        locale: ar-EG
+        direction: rtl
+        mobile_first: true
+        renderer_mode: structured_slots_only
+        planned_section_order:
+          - hero
+          - service-summary
+          - trust-strip
+          - whatsapp-cta
+          - footer-contact
+        renderable_section_order:
+          - hero
+          - service-summary
+          - trust-strip
+          - whatsapp-cta
+          - footer-contact
+      cta:
+        primary:
+          cta_id: primary
+          action: direct_whatsapp
+          target: https://wa.me/201112223334
+          placements:
+            - hero
+            - footer
+      structured_data:
+        page_level_jsonld:
+          LocalBusiness:
+            "@context": https://schema.org
+            "@type": LocalBusiness
+            areaServed: Maadi, Cairo
+            makesOffer:
+              - "@type": Offer
+                itemOffered:
+                  "@type": Service
+                  name: apartment wiring repair
+              - "@type": Offer
+                itemOffered:
+                  "@type": Service
+                  name: electrical panel maintenance
+              - "@type": Offer
+                itemOffered:
+                  "@type": Service
+                  name: lighting installation
+            potentialAction:
+              "@type": CommunicateAction
+              target: https://wa.me/201112223334
+            openingHours: daily 10am-10pm
+          ProfessionalService:
+            "@context": https://schema.org
+            "@type": ProfessionalService
+            areaServed: Maadi, Cairo
+            serviceType:
+              - apartment wiring repair
+              - electrical panel maintenance
+              - lighting installation
+            potentialAction:
+              "@type": CommunicateAction
+              target: https://wa.me/201112223334
+            hoursAvailable: daily 10am-10pm
+      sections:
+        hero:
+          render_status: ready
+          slot_order:
+            - trade_type
+            - business_label
+            - primary_locality
+            - primary_cta_ref
+          slots:
+            - slot_id: trade_type
+              status: resolved
+              value: electrician
+              source:
+                stage: trade_brief
+                field: trade_type
+            - slot_id: business_label
+              status: unresolved
+              required_input: business_label
+            - slot_id: primary_locality
+              status: resolved
+              value: Maadi, Cairo
+              source:
+                stage: trade_brief
+                field: primary_locality
+            - slot_id: primary_cta_ref
+              status: resolved
+              value: primary
+              source:
+                stage: landing_artifact
+                field: cta.primary
+        service-summary:
+          render_status: ready
+          slot_order:
+            - service_scope_preview
+          slots:
+            - slot_id: service_scope_preview
+              status: resolved
+              value:
+                - apartment wiring repair
+                - electrical panel maintenance
+                - lighting installation
+              source:
+                stage: trade_brief
+                field: service_scope
+        trust-strip:
+          render_status: ready
+          slot_order:
+            - trust_signals
+            - differentiators
+          slots:
+            - slot_id: trust_signals
+              status: resolved
+              value:
+                - 10 years experience
+                - emergency service available
+              source:
+                stage: trade_brief
+                field: trust_signals
+            - slot_id: differentiators
+              status: resolved
+              value:
+                - same-day visits
+                - clear pricing before work
+              source:
+                stage: trade_brief
+                field: differentiators
+        whatsapp-cta:
+          render_status: ready
+          slot_order:
+            - primary_cta_ref
+          slots:
+            - slot_id: primary_cta_ref
+              status: resolved
+              value: primary
+              source:
+                stage: landing_artifact
+                field: cta.primary
+        footer-contact:
+          render_status: ready
+          slot_order:
+            - primary_cta_ref
+            - primary_locality
+          slots:
+            - slot_id: primary_cta_ref
+              status: resolved
+              value: primary
+              source:
+                stage: landing_artifact
+                field: cta.primary
+            - slot_id: primary_locality
+              status: resolved
+              value: Maadi, Cairo
+              source:
+                stage: trade_brief
+                field: primary_locality
+    default:
+      rendering_handoff:
+        locale: ar-EG
+        direction: rtl
+        mobile_first: true
+        renderer_mode: structured_slots_only
+        planned_section_order:
+          - hero
+          - service-list
+          - trust-strip
+          - gallery
+          - hours
+          - whatsapp-cta
+          - footer-contact
+        renderable_section_order:
+          - hero
+          - service-list
+          - trust-strip
+          - hours
+          - whatsapp-cta
+          - footer-contact
+      cta:
+        primary:
+          cta_id: primary
+          action: direct_whatsapp
+          target: https://wa.me/201112223334
+          placements:
+            - hero
+            - sticky_mobile
+            - footer
+      structured_data:
+        page_level_jsonld:
+          LocalBusiness:
+            "@context": https://schema.org
+            "@type": LocalBusiness
+            areaServed: Maadi, Cairo
+            makesOffer:
+              - "@type": Offer
+                itemOffered:
+                  "@type": Service
+                  name: apartment wiring repair
+              - "@type": Offer
+                itemOffered:
+                  "@type": Service
+                  name: electrical panel maintenance
+              - "@type": Offer
+                itemOffered:
+                  "@type": Service
+                  name: lighting installation
+            potentialAction:
+              "@type": CommunicateAction
+              target: https://wa.me/201112223334
+            openingHours: daily 10am-10pm
+          ProfessionalService:
+            "@context": https://schema.org
+            "@type": ProfessionalService
+            areaServed: Maadi, Cairo
+            serviceType:
+              - apartment wiring repair
+              - electrical panel maintenance
+              - lighting installation
+            potentialAction:
+              "@type": CommunicateAction
+              target: https://wa.me/201112223334
+            hoursAvailable: daily 10am-10pm
+      sections:
+        hero:
+          render_status: ready
+          slot_order:
+            - trade_type
+            - business_label
+            - primary_locality
+            - primary_cta_ref
+          slots:
+            - slot_id: trade_type
+              status: resolved
+              value: electrician
+              source:
+                stage: trade_brief
+                field: trade_type
+            - slot_id: business_label
+              status: unresolved
+              required_input: business_label
+            - slot_id: primary_locality
+              status: resolved
+              value: Maadi, Cairo
+              source:
+                stage: trade_brief
+                field: primary_locality
+            - slot_id: primary_cta_ref
+              status: resolved
+              value: primary
+              source:
+                stage: landing_artifact
+                field: cta.primary
+        service-list:
+          render_status: ready
+          slot_order:
+            - service_items
+          slots:
+            - slot_id: service_items
+              status: resolved
+              value:
+                - apartment wiring repair
+                - electrical panel maintenance
+                - lighting installation
+              source:
+                stage: trade_brief
+                field: service_scope
+        trust-strip:
+          render_status: ready
+          slot_order:
+            - trust_signals
+            - differentiators
+          slots:
+            - slot_id: trust_signals
+              status: resolved
+              value:
+                - 10 years experience
+                - emergency service available
+              source:
+                stage: trade_brief
+                field: trust_signals
+            - slot_id: differentiators
+              status: resolved
+              value:
+                - same-day visits
+                - clear pricing before work
+              source:
+                stage: trade_brief
+                field: differentiators
+        gallery:
+          render_status: withheld
+          slot_order:
+            - gallery_assets
+          slots:
+            - slot_id: gallery_assets
+              status: unresolved
+              required_input: gallery_assets
+        hours:
+          render_status: ready
+          slot_order:
+            - work_hours
+          slots:
+            - slot_id: work_hours
+              status: resolved
+              value: daily 10am-10pm
+              source:
+                stage: trade_brief
+                field: work_hours
+        whatsapp-cta:
+          render_status: ready
+          slot_order:
+            - primary_cta_ref
+          slots:
+            - slot_id: primary_cta_ref
+              status: resolved
+              value: primary
+              source:
+                stage: landing_artifact
+                field: cta.primary
+        footer-contact:
+          render_status: ready
+          slot_order:
+            - primary_cta_ref
+            - primary_locality
+          slots:
+            - slot_id: primary_cta_ref
+              status: resolved
+              value: primary
+              source:
+                stage: landing_artifact
+                field: cta.primary
+            - slot_id: primary_locality
+              status: resolved
+              value: Maadi, Cairo
+              source:
+                stage: trade_brief
+                field: primary_locality
+    premium:
+      rendering_handoff:
+        locale: ar-EG
+        direction: rtl
+        mobile_first: true
+        renderer_mode: structured_slots_only
+        planned_section_order:
+          - hero
+          - video-anchor
+          - service-list
+          - trust-strip
+          - gallery
+          - reviews
+          - hours
+          - whatsapp-cta
+          - footer-contact
+        renderable_section_order:
+          - hero
+          - service-list
+          - trust-strip
+          - hours
+          - whatsapp-cta
+          - footer-contact
+      cta:
+        primary:
+          cta_id: primary
+          action: direct_whatsapp
+          target: https://wa.me/201112223334
+          placements:
+            - hero
+            - sticky_mobile
+            - mid_page
+            - footer
+      structured_data:
+        page_level_jsonld:
+          LocalBusiness:
+            "@context": https://schema.org
+            "@type": LocalBusiness
+            areaServed: Maadi, Cairo
+            makesOffer:
+              - "@type": Offer
+                itemOffered:
+                  "@type": Service
+                  name: apartment wiring repair
+              - "@type": Offer
+                itemOffered:
+                  "@type": Service
+                  name: electrical panel maintenance
+              - "@type": Offer
+                itemOffered:
+                  "@type": Service
+                  name: lighting installation
+            potentialAction:
+              "@type": CommunicateAction
+              target: https://wa.me/201112223334
+            openingHours: daily 10am-10pm
+          ProfessionalService:
+            "@context": https://schema.org
+            "@type": ProfessionalService
+            areaServed: Maadi, Cairo
+            serviceType:
+              - apartment wiring repair
+              - electrical panel maintenance
+              - lighting installation
+            potentialAction:
+              "@type": CommunicateAction
+              target: https://wa.me/201112223334
+            hoursAvailable: daily 10am-10pm
+      sections:
+        hero:
+          render_status: ready
+          slot_order:
+            - trade_type
+            - business_label
+            - primary_locality
+            - primary_cta_ref
+          slots:
+            - slot_id: trade_type
+              status: resolved
+              value: electrician
+              source:
+                stage: trade_brief
+                field: trade_type
+            - slot_id: business_label
+              status: unresolved
+              required_input: business_label
+            - slot_id: primary_locality
+              status: resolved
+              value: Maadi, Cairo
+              source:
+                stage: trade_brief
+                field: primary_locality
+            - slot_id: primary_cta_ref
+              status: resolved
+              value: primary
+              source:
+                stage: landing_artifact
+                field: cta.primary
+        video-anchor:
+          render_status: withheld
+          slot_order:
+            - video_asset
+          slots:
+            - slot_id: video_asset
+              status: unresolved
+              required_input: video_asset_or_video_slot
+        service-list:
+          render_status: ready
+          slot_order:
+            - service_items
+          slots:
+            - slot_id: service_items
+              status: resolved
+              value:
+                - apartment wiring repair
+                - electrical panel maintenance
+                - lighting installation
+              source:
+                stage: trade_brief
+                field: service_scope
+        trust-strip:
+          render_status: ready
+          slot_order:
+            - trust_signals
+            - differentiators
+          slots:
+            - slot_id: trust_signals
+              status: resolved
+              value:
+                - 10 years experience
+                - emergency service available
+              source:
+                stage: trade_brief
+                field: trust_signals
+            - slot_id: differentiators
+              status: resolved
+              value:
+                - same-day visits
+                - clear pricing before work
+              source:
+                stage: trade_brief
+                field: differentiators
+        gallery:
+          render_status: withheld
+          slot_order:
+            - gallery_assets
+          slots:
+            - slot_id: gallery_assets
+              status: unresolved
+              required_input: gallery_assets
+        reviews:
+          render_status: withheld
+          slot_order:
+            - review_items
+          slots:
+            - slot_id: review_items
+              status: unresolved
+              required_input: review_items
+        hours:
+          render_status: ready
+          slot_order:
+            - work_hours
+          slots:
+            - slot_id: work_hours
+              status: resolved
+              value: daily 10am-10pm
+              source:
+                stage: trade_brief
+                field: work_hours
+        whatsapp-cta:
+          render_status: ready
+          slot_order:
+            - primary_cta_ref
+          slots:
+            - slot_id: primary_cta_ref
+              status: resolved
+              value: primary
+              source:
+                stage: landing_artifact
+                field: cta.primary
+        footer-contact:
+          render_status: ready
+          slot_order:
+            - primary_cta_ref
+            - primary_locality
+          slots:
+            - slot_id: primary_cta_ref
+              status: resolved
+              value: primary
+              source:
+                stage: landing_artifact
+                field: cta.primary
+            - slot_id: primary_locality
+              status: resolved
+              value: Maadi, Cairo
+              source:
+                stage: trade_brief
+                field: primary_locality
+  missing_inputs: []
+  missing_required_fields:
+    - business_label
+  source_evidence:
+    landing_fields:
+      - trade_type
+      - primary_locality
+      - service_scope
+      - whatsapp_target
+      - differentiators
+      - trust_signals
+      - work_hours
+  implementation_handoff:
+    render_ready_tiers:
+      - lite
+      - default
+      - premium
+    content_gaps:
+      - gallery_assets
+      - video_asset_or_video_slot
+      - review_items
+    unresolved_inputs:
+      - business_label
 expected:
   block_stage: null
   signal: null
