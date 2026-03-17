@@ -1,0 +1,75 @@
+evidence_contract:
+  version: "1.0"
+  slice: "Incident Investigator Foundation Slice 1"
+  classification_boundary:
+    statement: "evidence_classes are post-correlation assessment classes. They are not interchangeable with adapter-local pre_correlation_hint annotations."
+    pre_correlation_hint_values:
+      - "hard_key_present"
+      - "identity_cluster"
+      - "context_only"
+  operational_definitions:
+    independent_evidence_items:
+      rule: "Evidence items are independent only when they have different evidence_id values and resolve to different source_ref.ref_id or raw locators. Duplicate renderings of the same underlying locator do not count twice."
+  evidence_classes:
+    strong_signal:
+      definition: "Direct, high-confidence evidence that materially strengthens correlation or causal interpretation."
+      examples:
+        - "Exact request_id match across two sources."
+        - "Direct event-to-log linkage by exact locator or exact request key."
+        - "Exact failure signature with exact release, service_slug, and environment match inside the allowed time window."
+    soft_signal:
+      definition: "Evidence that supports a likely relationship but does not prove direct linkage on its own."
+      examples:
+        - "Exact release, service_slug, and environment match with bounded time overlap."
+        - "Compatible failure or message family across sources without a hard correlation key."
+    weak_hint:
+      definition: "Low-confidence evidence that may justify further collection but cannot support a root-cause claim alone."
+      examples:
+        - "Broad time overlap only."
+        - "Message similarity only."
+        - "Release-only coincidence."
+        - "Uncorroborated narrative hint."
+  claim_thresholds:
+    no_root_cause:
+      allowed_in_slice_1: true
+      rule: "Use when evidence is insufficient to support a root-cause claim."
+    possible_root_cause:
+      allowed_in_slice_1: true
+      minimum_requirements:
+        - "At least one soft_signal."
+        - "No unresolved contradictory strong_signal."
+      reporting_rule: "Must be framed as tentative and must include missing evidence."
+    likely_root_cause:
+      allowed_in_slice_1: true
+      minimum_requirements:
+        - "At least two independent evidence items."
+        - "At least one strong_signal or two soft_signal items."
+        - "No unresolved contradictory strong_signal."
+      reporting_rule: "This is an evidence-backed report claim only and never a truth assertion without cited supporting_evidence_refs."
+    confirmed_root_cause:
+      reserved: true
+      allowed_in_slice_1: false
+      rule: "Reserved for a later phase with stronger correlation and corroboration guarantees."
+  confidence_rules:
+    LOW:
+      rule: "Use when evidence is limited to weak hints or one soft signal with major unresolved gaps."
+    MEDIUM:
+      rule: "Use when evidence contains one strong signal or two soft signals, with explicit uncertainty remaining."
+    HIGH:
+      rule: "Use only when the leading hypothesis is supported by at least three independent evidence items and either one HARD_MATCH correlation result or two independent SOFT_MATCH correlation results, with no unresolved contradiction that blocks the claim. HIGH does not permit confirmed_root_cause in Slice 1."
+  missing_evidence_rules:
+    required_reporting:
+      - "State the missing keys or artifacts explicitly."
+      - "State whether the gap blocks correlation or only weakens confidence."
+      - "State the next read-only step that would reduce uncertainty."
+    blocking_examples:
+      - "Missing request_id when only broad time overlap exists."
+      - "Missing service_slug or environment for a claimed soft match."
+  prohibited_claims:
+    - "confirmed_root_cause"
+    - "remediation_recommendation"
+    - "rollback_recommendation"
+    - "patch_suggestion"
+    - "blame_assignment"
+    - "fixed_or_resolved_language"
+    - "business_impact_statement_without_evidence"

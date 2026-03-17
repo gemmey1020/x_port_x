@@ -1,0 +1,60 @@
+sentry_adapter:
+  version: "1.0"
+  slice: "Incident Investigator Foundation Slice 1"
+  artifact_type: "contract_specification"
+  ownership_boundary:
+    statements:
+      - "Live Sentry access remains owned by the frozen Sentry capability."
+      - "This adapter is a normalization and consumption contract, not a replacement Sentry client."
+      - "This adapter may consume Sentry evidence only after the existing Sentry readiness gates have passed."
+  accepted_inputs:
+    trigger_types:
+      - "sentry_issue_id"
+      - "sentry_short_id"
+      - "release_regression"
+      - "request_id"
+    request_id_note: "request_id input may use Sentry only when project-event lookup is already available within the frozen Sentry operations layer."
+  retrieval_scope:
+    allowed_evidence_sources:
+      - "issue_detail"
+      - "issue_events"
+      - "event_detail"
+      - "project_events"
+      - "release_metadata_for_release_regression_only"
+    excluded_from_slice_1:
+      - "release_health_statistics"
+      - "org_wide_broad_searches"
+      - "write_actions"
+  normalization_rules:
+    normalization_requirement: "Emit normalized_evidence_item objects and source_ref objects only."
+    mapping_completeness_rule: "Every required normalized_evidence_item field and every required source_ref field MUST be populated as defined below."
+    field_mappings:
+      evidence_id: "Derive deterministically from the best available raw locator. Prefer event id; else issue id; else short id; else release locator for release metadata."
+      source_type: "sentry"
+      evidence_level: "L1"
+      collected_at: "Set to the adapter retrieval timestamp."
+      observed_at: "Use event timestamp when present; else issue last-seen timestamp; else release timestamp for release metadata; else collected_at."
+      summary: "Map from issue title or event title. Use the release label for release metadata."
+      normalized_identity.environment: "Map from Sentry environment tag when present."
+      normalized_identity.release: "Map from Sentry release tag or deterministic release field when present."
+      normalized_identity.service_slug: "Map from project slug only when deterministically available."
+      normalized_identity.request_id: "Map only when present in tags or deterministic event context."
+      normalized_identity.workspace_id: "Map when a deterministic workspace_id is available from the integration context; otherwise null."
+      normalized_identity.trace_id: "Map only when deterministically present; otherwise null."
+      signature: "Map from deterministic issue or event identifiers only, such as fingerprint family, culprit family, or exact title family."
+      raw_locator: "Use issue id, short id, event id, or release locator."
+      content: "Populate an object with source-visible fields such as timestamp, event_title, event_type, error_signature, stack_summary, message, and release label when present. Unavailable fields remain null."
+    pre_correlation_hint_rules:
+      hard_key_present: "Use only when normalized_identity.request_id is present."
+      identity_cluster: "Use when release, service_slug, and environment are all present without a hard key."
+      context_only: "Use for all other normalized Sentry evidence."
+    source_ref_mappings:
+      ref_id: "Derive deterministically from the same raw_locator used for evidence_id with a sentry source prefix."
+      source_type: "sentry"
+      locator: "Mirror raw_locator."
+      collected_at: "Mirror normalized_evidence_item.collected_at."
+      evidence_level: "Mirror normalized_evidence_item.evidence_level."
+    non_goals:
+      - "Do not redefine Sentry CLI behavior."
+      - "Do not perform provider-specific write flows."
+      - "Do not introduce hidden normalization outside this contract."

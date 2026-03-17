@@ -1,0 +1,64 @@
+logs_adapter:
+  version: "1.0"
+  slice: "Incident Investigator Foundation Slice 1"
+  artifact_type: "contract_specification"
+  accepted_inputs:
+    log_file_paths:
+      type: "explicit_local_file_list"
+      required: true
+  bounded_retrieval_rules:
+    - "Only explicitly supplied log_file_paths may be read."
+    - "Maximum files per investigation: 5."
+    - "Maximum file size per file: 20MB."
+    - "No directory scans."
+    - "No recursive discovery."
+    - "No arbitrary filesystem search."
+    - "No remote logging APIs."
+    - "No GitHub-linked logs."
+    - "No trace backends."
+  supported_formats:
+    - "json_lines"
+    - "plain_text_lines"
+  parsed_fields_when_present:
+    - "timestamp"
+    - "level"
+    - "message"
+    - "service_slug"
+    - "environment"
+    - "release"
+    - "request_id"
+    - "trace_id"
+  normalization_rules:
+    normalization_requirement: "Emit normalized_evidence_item objects and source_ref objects only."
+    mapping_completeness_rule: "Every required normalized_evidence_item field and every required source_ref field MUST be populated as defined below."
+    field_mappings:
+      evidence_id: "Derive deterministically from absolute path plus line number."
+      source_type: "logs"
+      evidence_level: "L1"
+      collected_at: "Set to the adapter read timestamp."
+      summary: "Map from parsed message."
+      observed_at: "Map from parsed timestamp when present; otherwise use collected_at."
+      normalized_identity.workspace_id: "Map when present in the parsed log record; otherwise null."
+      normalized_identity.service_slug: "Map from parsed service_slug when present."
+      normalized_identity.environment: "Map from parsed environment when present."
+      normalized_identity.release: "Map from parsed release when present."
+      normalized_identity.request_id: "Map from parsed request_id when present."
+      normalized_identity.trace_id: "Map from parsed trace_id when present."
+      raw_locator: "Use absolute path plus line number."
+      signature: "Use deterministic message-family extraction only; do not rely on semantic guessing."
+      content: "Populate an object with parsed timestamp, level, message, service_slug, environment, release, request_id, and trace_id fields. Unavailable fields remain null."
+    pre_correlation_hint_rules:
+      hard_key_present: "Use only when request_id exists."
+      identity_cluster: "Use when release, service_slug, and environment exist together without a hard key."
+      context_only: "Use for all other normalized log evidence."
+    source_ref_mappings:
+      ref_id: "Derive deterministically from the same absolute path plus line number used for evidence_id with a logs source prefix."
+      source_type: "logs"
+      locator: "Mirror raw_locator."
+      collected_at: "Mirror normalized_evidence_item.collected_at."
+      evidence_level: "Mirror normalized_evidence_item.evidence_level."
+    excluded_from_slice_1:
+      - "directory_mode"
+      - "archive_bundle_ingestion"
+      - "multiline_stack_reconstruction"
+      - "provider_specific_logging_variants"

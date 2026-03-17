@@ -1,0 +1,195 @@
+incident_schema:
+  version: "1.0"
+  slice: "Incident Investigator Foundation Slice 1"
+  scope: "read_only"
+  supported_sources:
+    - "sentry"
+    - "logs"
+  normalization_requirement:
+    statement: "Normalization is explicit and mandatory. Adapters MUST emit normalized_evidence_item objects before correlation or hypothesis ranking."
+    correlation_input_rule: "Correlation consumes normalized_evidence_item objects only."
+    pre_correlation_annotation_rule: "pre_correlation_hint is an adapter-local retrieval annotation only. It is not equivalent to post-correlation evidence_classes."
+  objects:
+    incident:
+      required_fields:
+        - "incident_id"
+        - "investigation_id"
+        - "seed"
+        - "status"
+        - "primary_source"
+        - "identity"
+        - "source_refs"
+        - "evidence_buckets"
+        - "hypotheses"
+        - "recommended_actions"
+        - "uncertainty"
+      optional_fields:
+        - "title"
+        - "time_window"
+        - "linked_entities"
+      enums:
+        status:
+          - "seeded"
+          - "gathering"
+          - "normalized"
+          - "correlated"
+          - "hypothesized"
+          - "blocked"
+          - "reported"
+        primary_source:
+          - "sentry"
+          - "logs"
+          - "mixed"
+      field_shapes:
+        seed:
+          required_fields:
+            - "type"
+            - "value"
+          enums:
+            type:
+              - "sentry_issue_id"
+              - "sentry_short_id"
+              - "request_id"
+              - "release_regression"
+        identity:
+          required_fields:
+            - "workspace_id"
+            - "service_slug"
+            - "environment"
+            - "release"
+            - "request_id"
+            - "trace_id"
+          field_rules:
+            - "All identity fields MAY be null when the source does not provide them."
+            - "Correlation may use only identity fields that are present."
+        time_window:
+          required_fields:
+            - "start_at"
+            - "end_at"
+        linked_entities:
+          optional_fields:
+            - "sentry_issue_id"
+            - "sentry_short_id"
+            - "sentry_event_ids"
+            - "trace_ids"
+        evidence_buckets:
+          required_fields:
+            - "strong_signals"
+            - "soft_signals"
+            - "weak_hints"
+        uncertainty:
+          required_fields:
+            - "overall_confidence"
+            - "unresolved_questions"
+            - "missing_evidence_summary"
+          enums:
+            overall_confidence:
+              - "LOW"
+              - "MEDIUM"
+              - "HIGH"
+    normalized_evidence_item:
+      required_fields:
+        - "evidence_id"
+        - "source_type"
+        - "evidence_level"
+        - "collected_at"
+        - "observed_at"
+        - "summary"
+        - "normalized_identity"
+        - "raw_locator"
+        - "pre_correlation_hint"
+        - "content"
+      optional_fields:
+        - "signature"
+        - "matched_keys"
+        - "related_refs"
+      enums:
+        source_type:
+          - "sentry"
+          - "logs"
+        evidence_level:
+          - "L1"
+          - "L2"
+          - "L3"
+        pre_correlation_hint:
+          - "hard_key_present"
+          - "identity_cluster"
+          - "context_only"
+      field_shapes:
+        normalized_identity:
+          required_fields:
+            - "workspace_id"
+            - "service_slug"
+            - "environment"
+            - "release"
+            - "request_id"
+            - "trace_id"
+          field_rules:
+            - "Fields MAY be null when the parsed source does not provide them."
+        content:
+          optional_fields:
+            - "timestamp"
+            - "level"
+            - "message"
+            - "event_title"
+            - "event_type"
+            - "error_signature"
+            - "stack_summary"
+      field_rules:
+        - "pre_correlation_hint is a pre-correlation annotation only and MUST NOT satisfy evidence_contract claim thresholds by itself."
+    source_ref:
+      required_fields:
+        - "ref_id"
+        - "source_type"
+        - "locator"
+        - "collected_at"
+        - "evidence_level"
+      optional_fields:
+        - "matched_keys"
+        - "notes"
+      enums:
+        source_type:
+          - "sentry"
+          - "logs"
+        evidence_level:
+          - "L1"
+          - "L2"
+          - "L3"
+      field_rules:
+        - "source_ref.locator SHOULD mirror the normalized_evidence_item.raw_locator for the same evidence item."
+        - "source_ref.collected_at SHOULD mirror the normalized_evidence_item.collected_at for the same evidence item."
+    hypothesis:
+      required_fields:
+        - "hypothesis_id"
+        - "statement"
+        - "rank"
+        - "confidence"
+        - "supporting_evidence_refs"
+        - "contradicting_evidence_refs"
+        - "missing_evidence"
+        - "status"
+      enums:
+        confidence:
+          - "LOW"
+          - "MEDIUM"
+          - "HIGH"
+        status:
+          - "leading"
+          - "alternate"
+          - "discarded"
+      field_rules:
+        - "Every hypothesis MUST cite supporting_evidence_refs."
+        - "Contradicting evidence MUST remain visible; it may not be dropped to inflate rank."
+    recommended_action:
+      required_fields:
+        - "action_type"
+        - "reason"
+      enums:
+        action_type:
+          - "gather_more_logs"
+          - "inspect_more_sentry_events"
+          - "inspect_release_context"
+          - "request_missing_identifiers"
+          - "defer_external_source"
+      field_rules:
+        - "Recommended actions in Slice 1 MUST remain read-only."

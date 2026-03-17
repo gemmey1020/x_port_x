@@ -1,0 +1,511 @@
+pipeline_bundle_version: "1.1"
+case_id: "happy-path-electrician"
+trade_brief:
+  trade_type: electrician
+  primary_locality: Maadi, Cairo
+  service_scope:
+    - apartment wiring repair
+    - electrical panel maintenance
+    - lighting installation
+  whatsapp_target: https://wa.me/201112223334
+  differentiators:
+    - same-day visits
+    - clear pricing before work
+  trust_signals:
+    - 10 years experience
+    - emergency service available
+  work_hours: daily 10am-10pm
+  gallery_available: false
+  video_available: false
+  reviews_available: true
+  requested_scope: all
+portfolio_output:
+  portfolio_spectrum:
+    lite:
+      sections:
+        - hero
+        - service-summary
+        - trust-strip
+        - whatsapp-cta
+        - footer-contact
+      cta_model:
+        primary: direct_whatsapp
+        placements:
+          - hero
+          - footer
+      copy_direction:
+        language: egyptian_arabic
+        tone: clear_professional
+        density: short
+      proof_requirements:
+        - primary_locality
+        - service_scope
+        - 1_to_2_trust_signals
+      schema_targets:
+        - LocalBusiness
+        - ProfessionalService
+    default:
+      sections:
+        - hero
+        - service-list
+        - trust-strip
+        - gallery
+        - hours
+        - whatsapp-cta
+        - footer-contact
+      cta_model:
+        primary: direct_whatsapp
+        placements:
+          - hero
+          - sticky_mobile
+          - footer
+      copy_direction:
+        language: egyptian_arabic
+        tone: clear_professional
+        density: concise
+      proof_requirements:
+        - service_scope
+        - 2_to_3_trust_signals
+        - gallery_assets
+        - work_hours
+      schema_targets:
+        - LocalBusiness
+        - ProfessionalService
+    premium:
+      sections:
+        - hero
+        - video-anchor
+        - service-list
+        - trust-strip
+        - gallery
+        - reviews
+        - hours
+        - whatsapp-cta
+        - footer-contact
+      cta_model:
+        primary: direct_whatsapp
+        placements:
+          - hero
+          - sticky_mobile
+          - mid_page
+          - footer
+      copy_direction:
+        language: egyptian_arabic
+        tone: clear_professional
+        density: persuasive_tight
+      proof_requirements:
+        - service_scope
+        - 3_plus_trust_signals_or_case_proof
+        - gallery_assets
+        - work_hours
+        - video_asset_or_video_slot
+        - reviews_or_case_proof
+      schema_targets:
+        - LocalBusiness
+        - ProfessionalService
+  missing_inputs: []
+  source_evidence:
+    brief_fields:
+      - trade_type
+      - primary_locality
+      - service_scope
+      - whatsapp_target
+      - trust_signals
+      - work_hours
+      - gallery_available
+      - video_available
+      - reviews_available
+      - requested_scope
+  implementation_handoff:
+    required_entities:
+      - trade_type
+      - primary_locality
+      - service_scope
+      - whatsapp_target
+    content_gaps:
+      - gallery_assets
+      - video_asset_or_video_slot
+    frontend_priorities:
+      - arabic_first
+      - mobile_first
+      - direct_whatsapp_primary
+schema_mapping_output:
+  schema_mapping:
+    lite:
+      LocalBusiness:
+        entity_map:
+          - target_field: areaServed
+            source_field: primary_locality
+            status: mapped
+            resolved_value: Maadi, Cairo
+          - target_field: makesOffer.itemOffered
+            source_field: service_scope
+            status: mapped
+            resolved_value:
+              - apartment wiring repair
+              - electrical panel maintenance
+              - lighting installation
+          - target_field: potentialAction.target
+            source_field: whatsapp_target
+            status: mapped
+            resolved_value: https://wa.me/201112223334
+          - target_field: openingHours
+            source_field: work_hours
+            status: mapped
+            resolved_value: daily 10am-10pm
+        section_map:
+          - section: hero
+            target_fields:
+              - areaServed
+          - section: service-summary
+            target_fields:
+              - makesOffer.itemOffered
+          - section: trust-strip
+            target_fields:
+              - award_or_trust_signal
+          - section: whatsapp-cta
+            target_fields:
+              - potentialAction.target
+          - section: footer-contact
+            target_fields:
+              - potentialAction.target
+      ProfessionalService:
+        entity_map:
+          - target_field: areaServed
+            source_field: primary_locality
+            status: mapped
+            resolved_value: Maadi, Cairo
+          - target_field: serviceType
+            source_field: service_scope
+            status: mapped
+            resolved_value:
+              - apartment wiring repair
+              - electrical panel maintenance
+              - lighting installation
+          - target_field: potentialAction.target
+            source_field: whatsapp_target
+            status: mapped
+            resolved_value: https://wa.me/201112223334
+          - target_field: hoursAvailable
+            source_field: work_hours
+            status: mapped
+            resolved_value: daily 10am-10pm
+        section_map:
+          - section: hero
+            target_fields:
+              - areaServed
+          - section: service-summary
+            target_fields:
+              - serviceType
+          - section: trust-strip
+            target_fields:
+              - credential_or_trust_signal
+          - section: whatsapp-cta
+            target_fields:
+              - potentialAction.target
+          - section: footer-contact
+            target_fields:
+              - potentialAction.target
+    default:
+      LocalBusiness:
+        entity_map:
+          - target_field: areaServed
+            source_field: primary_locality
+            status: mapped
+            resolved_value: Maadi, Cairo
+          - target_field: makesOffer.itemOffered
+            source_field: service_scope
+            status: mapped
+            resolved_value:
+              - apartment wiring repair
+              - electrical panel maintenance
+              - lighting installation
+          - target_field: potentialAction.target
+            source_field: whatsapp_target
+            status: mapped
+            resolved_value: https://wa.me/201112223334
+          - target_field: openingHours
+            source_field: work_hours
+            status: mapped
+            resolved_value: daily 10am-10pm
+        section_map:
+          - section: hero
+            target_fields:
+              - areaServed
+          - section: service-list
+            target_fields:
+              - makesOffer.itemOffered
+          - section: trust-strip
+            target_fields:
+              - award_or_trust_signal
+          - section: hours
+            target_fields:
+              - openingHours
+          - section: whatsapp-cta
+            target_fields:
+              - potentialAction.target
+          - section: footer-contact
+            target_fields:
+              - potentialAction.target
+      ProfessionalService:
+        entity_map:
+          - target_field: areaServed
+            source_field: primary_locality
+            status: mapped
+            resolved_value: Maadi, Cairo
+          - target_field: serviceType
+            source_field: service_scope
+            status: mapped
+            resolved_value:
+              - apartment wiring repair
+              - electrical panel maintenance
+              - lighting installation
+          - target_field: potentialAction.target
+            source_field: whatsapp_target
+            status: mapped
+            resolved_value: https://wa.me/201112223334
+          - target_field: hoursAvailable
+            source_field: work_hours
+            status: mapped
+            resolved_value: daily 10am-10pm
+        section_map:
+          - section: hero
+            target_fields:
+              - areaServed
+          - section: service-list
+            target_fields:
+              - serviceType
+          - section: trust-strip
+            target_fields:
+              - credential_or_trust_signal
+          - section: hours
+            target_fields:
+              - hoursAvailable
+          - section: whatsapp-cta
+            target_fields:
+              - potentialAction.target
+          - section: footer-contact
+            target_fields:
+              - potentialAction.target
+    premium:
+      LocalBusiness:
+        entity_map:
+          - target_field: areaServed
+            source_field: primary_locality
+            status: mapped
+            resolved_value: Maadi, Cairo
+          - target_field: makesOffer.itemOffered
+            source_field: service_scope
+            status: mapped
+            resolved_value:
+              - apartment wiring repair
+              - electrical panel maintenance
+              - lighting installation
+          - target_field: potentialAction.target
+            source_field: whatsapp_target
+            status: mapped
+            resolved_value: https://wa.me/201112223334
+          - target_field: openingHours
+            source_field: work_hours
+            status: mapped
+            resolved_value: daily 10am-10pm
+        section_map:
+          - section: hero
+            target_fields:
+              - areaServed
+          - section: service-list
+            target_fields:
+              - makesOffer.itemOffered
+          - section: trust-strip
+            target_fields:
+              - award_or_trust_signal
+          - section: hours
+            target_fields:
+              - openingHours
+          - section: whatsapp-cta
+            target_fields:
+              - potentialAction.target
+          - section: footer-contact
+            target_fields:
+              - potentialAction.target
+      ProfessionalService:
+        entity_map:
+          - target_field: areaServed
+            source_field: primary_locality
+            status: mapped
+            resolved_value: Maadi, Cairo
+          - target_field: serviceType
+            source_field: service_scope
+            status: mapped
+            resolved_value:
+              - apartment wiring repair
+              - electrical panel maintenance
+              - lighting installation
+          - target_field: potentialAction.target
+            source_field: whatsapp_target
+            status: mapped
+            resolved_value: https://wa.me/201112223334
+          - target_field: hoursAvailable
+            source_field: work_hours
+            status: mapped
+            resolved_value: daily 10am-10pm
+        section_map:
+          - section: hero
+            target_fields:
+              - areaServed
+          - section: service-list
+            target_fields:
+              - serviceType
+          - section: trust-strip
+            target_fields:
+              - credential_or_trust_signal
+          - section: hours
+            target_fields:
+              - hoursAvailable
+          - section: whatsapp-cta
+            target_fields:
+              - potentialAction.target
+          - section: footer-contact
+            target_fields:
+              - potentialAction.target
+  missing_required_fields:
+    - business_label
+  source_evidence:
+    upstream_fields:
+      - primary_locality
+      - service_scope
+      - whatsapp_target
+      - work_hours
+  implementation_handoff:
+    ready_targets:
+      - LocalBusiness
+      - ProfessionalService
+    unresolved_inputs:
+      - business_label
+    next_mapping_priority:
+      - resolve_business_label
+jsonld_output:
+  jsonld_payloads:
+    lite:
+      LocalBusiness:
+        "@context": https://schema.org
+        "@type": LocalBusiness
+        areaServed: Maadi, Cairo
+        makesOffer:
+          - "@type": Offer
+            itemOffered:
+              "@type": Service
+              name: apartment wiring repair
+          - "@type": Offer
+            itemOffered:
+              "@type": Service
+              name: electrical panel maintenance
+          - "@type": Offer
+            itemOffered:
+              "@type": Service
+              name: lighting installation
+        potentialAction:
+          "@type": CommunicateAction
+          target: https://wa.me/201112223334
+        openingHours: daily 10am-10pm
+      ProfessionalService:
+        "@context": https://schema.org
+        "@type": ProfessionalService
+        areaServed: Maadi, Cairo
+        serviceType:
+          - apartment wiring repair
+          - electrical panel maintenance
+          - lighting installation
+        potentialAction:
+          "@type": CommunicateAction
+          target: https://wa.me/201112223334
+        hoursAvailable: daily 10am-10pm
+    default:
+      LocalBusiness:
+        "@context": https://schema.org
+        "@type": LocalBusiness
+        areaServed: Maadi, Cairo
+        makesOffer:
+          - "@type": Offer
+            itemOffered:
+              "@type": Service
+              name: apartment wiring repair
+          - "@type": Offer
+            itemOffered:
+              "@type": Service
+              name: electrical panel maintenance
+          - "@type": Offer
+            itemOffered:
+              "@type": Service
+              name: lighting installation
+        potentialAction:
+          "@type": CommunicateAction
+          target: https://wa.me/201112223334
+        openingHours: daily 10am-10pm
+      ProfessionalService:
+        "@context": https://schema.org
+        "@type": ProfessionalService
+        areaServed: Maadi, Cairo
+        serviceType:
+          - apartment wiring repair
+          - electrical panel maintenance
+          - lighting installation
+        potentialAction:
+          "@type": CommunicateAction
+          target: https://wa.me/201112223334
+        hoursAvailable: daily 10am-10pm
+    premium:
+      LocalBusiness:
+        "@context": https://schema.org
+        "@type": LocalBusiness
+        areaServed: Maadi, Cairo
+        makesOffer:
+          - "@type": Offer
+            itemOffered:
+              "@type": Service
+              name: apartment wiring repair
+          - "@type": Offer
+            itemOffered:
+              "@type": Service
+              name: electrical panel maintenance
+          - "@type": Offer
+            itemOffered:
+              "@type": Service
+              name: lighting installation
+        potentialAction:
+          "@type": CommunicateAction
+          target: https://wa.me/201112223334
+        openingHours: daily 10am-10pm
+      ProfessionalService:
+        "@context": https://schema.org
+        "@type": ProfessionalService
+        areaServed: Maadi, Cairo
+        serviceType:
+          - apartment wiring repair
+          - electrical panel maintenance
+          - lighting installation
+        potentialAction:
+          "@type": CommunicateAction
+          target: https://wa.me/201112223334
+        hoursAvailable: daily 10am-10pm
+  missing_required_fields:
+    - business_label
+  source_evidence:
+    mapping_fields:
+      - areaServed
+      - makesOffer.itemOffered
+      - potentialAction.target
+      - openingHours
+      - serviceType
+      - hoursAvailable
+  implementation_handoff:
+    ready_payloads:
+      - LocalBusiness
+      - ProfessionalService
+    unresolved_inputs:
+      - business_label
+    next_jsonld_priority:
+      - resolve_business_label
+expected:
+  block_stage: null
+  signal: null

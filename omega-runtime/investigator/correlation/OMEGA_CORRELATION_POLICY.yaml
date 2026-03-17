@@ -1,0 +1,35 @@
+correlation_policy:
+  version: "1.0"
+  slice: "Incident Investigator Foundation Slice 1"
+  prerequisites:
+    - "Correlation consumes normalized_evidence_item objects only."
+    - "Raw adapter payloads are not valid correlation inputs."
+    - "Sentry-seeded investigations require at least one normalized sentry evidence item."
+  key_priority:
+    - rank: 1
+      key: "request_id"
+      rule: "Exact request_id match takes precedence over all other correlation strategies."
+    - rank: 2
+      key: "release + service_slug + environment"
+      rule: "Use only when all three fields match exactly."
+    - rank: 3
+      key: "bounded_timestamp_overlap"
+      rule: "Use only within the default time window."
+    - rank: 4
+      key: "signature_similarity"
+      rule: "Use as a weak hint only."
+  default_time_window:
+    window_seconds_before: 600
+    window_seconds_after: 600
+  strength_classes:
+    HARD_MATCH:
+      rule: "Exact request_id match across sources."
+    SOFT_MATCH:
+      rule: "Exact release, service_slug, and environment match with overlapping default time window."
+    WEAK_HINT:
+      rule: "Signature similarity, broad time adjacency, or partial identity overlap without a hard key."
+  contradiction_rules:
+    - "Environment mismatch weakens correlation."
+    - "Release mismatch weakens correlation."
+    - "Service mismatch weakens correlation."
+    - "Evidence outside the allowed time window cannot claim SOFT_MATCH."

@@ -1,0 +1,23 @@
+pipeline_bundle_version: "1.1"
+case_id: "blocked-path-missing-whatsapp"
+trade_brief:
+  trade_type: electrician
+  primary_locality: Maadi, Cairo
+  service_scope:
+    - apartment wiring repair
+    - electrical panel maintenance
+    - lighting installation
+  differentiators:
+    - same-day visits
+    - clear pricing before work
+  trust_signals:
+    - 10 years experience
+    - emergency service available
+  work_hours: daily 10am-10pm
+  gallery_available: false
+  video_available: false
+  reviews_available: true
+  requested_scope: all
+expected:
+  block_stage: portfolio-spectrum-builder
+  signal: Ω_INSUFFICIENT_DATA

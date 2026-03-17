@@ -1,0 +1,40 @@
+investigation_trigger_contract:
+  version: "1.0"
+  slice: "Incident Investigator Foundation Slice 1"
+  accepted_trigger_types:
+    sentry_issue_id:
+      required_fields:
+        - "value"
+      default_sources:
+        - "sentry"
+    sentry_short_id:
+      required_fields:
+        - "value"
+      default_sources:
+        - "sentry"
+    request_id:
+      required_fields:
+        - "value"
+      default_sources:
+        - "logs"
+      optional_sources:
+        - "sentry"
+    release_regression:
+      required_fields:
+        - "release"
+      optional_fields:
+        - "service_slug"
+        - "environment"
+      default_sources:
+        - "sentry"
+  source_selection_rules:
+    - "Sentry-derived triggers default to sentry source selection."
+    - "Logs are selected only when explicit log_file_paths are provided."
+    - "GitHub and traces are invalid source selections in Slice 1."
+    - "request_id investigations may include sentry only when Sentry context and readiness are available."
+  blocked_conditions:
+    - "Missing trigger value."
+    - "Unsupported trigger type."
+    - "Logs requested without explicit log_file_paths input."
+    - "request_id trigger without explicit log_file_paths and without usable Sentry context."
+    - "Sentry-derived trigger without existing Sentry readiness gates satisfied."
