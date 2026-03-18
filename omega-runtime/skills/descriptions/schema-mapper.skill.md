@@ -11,11 +11,11 @@ implementation_included: false
 # Schema Mapper
 
 ## Summary
-Maps a validated `portfolio_spectrum` payload into schema-ready mapping targets without generating JSON-LD.
+Maps a validated `portfolio_spectrum` payload into a compact schema-ready mapping payload without generating JSON-LD.
 
 ## Use When
 - Use when an approved `portfolio_spectrum` payload must be converted into deterministic schema mappings.
-- Use when upstream evidence and implementation handoff fields are already available.
+- Use when upstream evidence and implementation handoff fields are already available and must be carried into mapped output.
 
 ## Do Not Use When
 - Do not use when required upstream evidence is missing or invalid.
@@ -26,17 +26,19 @@ Maps a validated `portfolio_spectrum` payload into schema-ready mapping targets 
 
 ## Inputs And Preconditions
 - Requires validated `portfolio_spectrum`, `source_evidence`, and `implementation_handoff` objects.
+- Requires the upstream brief fields and required entities needed to emit supported schema targets.
 
 ## Outputs And Effects
-- Produces a compact `schema_mapping` payload plus missing-field and handoff information.
+- Produces a compact `schema_mapping` payload plus missing-field, evidence, and handoff information.
 
 ## Constraints And Non-Goals
 - Must block with `Ω_INSUFFICIENT_DATA` semantics when required evidence is missing.
 - Mapping only; no JSON-LD generation and no invented values.
+- Every emitted mapped row must carry `resolved_value` and preserve the upstream value shape.
 
 ## Important Source Artifacts
 - `/home/gemmey1020/.codex/skills/schema-mapper/SKILL.md`
 - `/home/gemmey1020/.codex/skills/schema-mapper/references/schema-rules.md`
 
 ## Notes
-- The source skill is deterministic and evidence-gated.
+- The source skill is deterministic, evidence-gated, and restricted to supported schema targets.

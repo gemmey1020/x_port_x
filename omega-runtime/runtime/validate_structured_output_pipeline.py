@@ -6,6 +6,7 @@ import argparse
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -14,11 +15,13 @@ import yaml
 SUPPORTED_TIERS = ("lite", "default", "premium")
 SUPPORTED_TARGETS = ("LocalBusiness", "ProfessionalService")
 REQUIRED_BRIEF_FIELDS = ("trade_type", "primary_locality", "service_scope", "whatsapp_target")
+ALLOWED_BUNDLE_VERSIONS = ("1.1", "1.2")
 STAGE_ORDER = (
     ("portfolio-spectrum-builder", "portfolio", "portfolio_output", True),
     ("schema-mapper", "mapping", "schema_mapping_output", True),
     ("jsonld-generator", "jsonld", "jsonld_output", True),
     ("landing-generator", "landing", "landing_output", False),
+    ("seo-artifact-generator", "seo", "seo_output", False),
 )
 ALLOWED_BLOCK_SIGNALS = {"Ω_INSUFFICIENT_DATA"}
 ASSET_GAP_TOKENS = ("gallery_assets", "video_asset_or_video_slot", "review_items")
@@ -37,6 +40,55 @@ LANDING_FIELD_ORDER = (
     "review_items",
 )
 LANDING_NON_ASSET_INPUT_ORDER = ("business_label", "work_hours", "differentiators", "trust_signals")
+SEO_FIELD_ORDER = (
+    "trade_type",
+    "business_label",
+    "primary_locality",
+    "service_scope",
+    "whatsapp_target",
+    "differentiators",
+    "trust_signals",
+    "work_hours",
+)
+SEO_UNRESOLVED_INPUT_ORDER = (
+    "business_label",
+    "trust_signals",
+    "work_hours",
+    "gallery_assets",
+    "video_asset_or_video_slot",
+    "review_items",
+)
+SEO_HEADING_TEXT = {
+    "service-summary": "Services",
+    "service-list": "Services",
+    "trust-strip": "Trust signals",
+    "hours": "Working hours",
+    "whatsapp-cta": "Contact on WhatsApp",
+    "footer-contact": "Area and contact",
+    "gallery": "Previous work",
+    "video-anchor": "Video",
+    "reviews": "Reviews",
+}
+SEO_HEADING_ALIGNMENT_RULES = (
+    "h1_maps_to_hero",
+    "section_heading_order_matches_landing_section_order",
+    "withheld_sections_keep_withheld_status",
+    "headings_must_not_introduce_unproven_fields",
+)
+SEO_RENDER_REQUIREMENTS = (
+    "apply_metadata_verbatim",
+    "preserve_heading_section_alignment",
+    "keep_locality_mentions_exact",
+    "preserve_landing_cta_positions",
+    "attach_existing_jsonld_verbatim",
+)
+SEO_VALIDATION_PRIORITIES = (
+    "validate_metadata_presence",
+    "validate_heading_section_alignment",
+    "validate_locality_consistency",
+    "validate_jsonld_linkage",
+    "validate_gap_preservation",
+)
 
 
 def load_document(path: Path) -> Any:
@@ -87,6 +139,97 @@ def requested_tiers(brief: dict[str, Any]) -> set[str]:
     if requested_scope in SUPPORTED_TIERS:
         return {requested_scope}
     return set()
+
+
+def first_service_item(brief: dict[str, Any]) -> str:
+    service_scope = brief.get("service_scope")
+    if not is_non_empty_list(service_scope):
+        raise ValueError("trade_brief.service_scope must be a non-empty list")
+    first_item = service_scope[0]
+    if not is_non_empty_str(first_item):
+        raise ValueError("trade_brief.service_scope[0] must be a non-empty string")
+    return first_item
+
+
+def service_list_sentence(brief: dict[str, Any]) -> str:
+    service_scope = brief.get("service_scope")
+    if not is_non_empty_list(service_scope):
+        raise ValueError("trade_brief.service_scope must be a non-empty list")
+    items = [item for item in service_scope[:3] if is_non_empty_str(item)]
+    if not items:
+        raise ValueError("trade_brief.service_scope must contain at least one non-empty string")
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} and {items[1]}"
+    return f"{items[0]}, {items[1]}, and {items[2]}"
+
+
+def build_seo_title(brief: dict[str, Any]) -> str:
+    trade_type = brief.get("trade_type")
+    primary_locality = brief.get("primary_locality")
+    business_label = brief.get("business_label")
+    if not is_non_empty_str(trade_type) or not is_non_empty_str(primary_locality):
+        raise ValueError("trade_brief must contain trade_type and primary_locality")
+    if is_non_empty_str(business_label):
+        return f"{business_label} | {trade_type} in {primary_locality}"
+    return f"{trade_type} in {primary_locality} | {first_service_item(brief)}"
+
+
+def build_seo_h1(brief: dict[str, Any]) -> str:
+    trade_type = brief.get("trade_type")
+    primary_locality = brief.get("primary_locality")
+    business_label = brief.get("business_label")
+    if not is_non_empty_str(trade_type) or not is_non_empty_str(primary_locality):
+        raise ValueError("trade_brief must contain trade_type and primary_locality")
+    if is_non_empty_str(business_label):
+        return f"{business_label} | {trade_type} in {primary_locality}"
+    return f"{trade_type} in {primary_locality}"
+
+
+def build_meta_description(brief: dict[str, Any]) -> str:
+    trade_type = brief.get("trade_type")
+    primary_locality = brief.get("primary_locality")
+    business_label = brief.get("business_label")
+    if not is_non_empty_str(trade_type) or not is_non_empty_str(primary_locality):
+        raise ValueError("trade_brief must contain trade_type and primary_locality")
+    services = service_list_sentence(brief)
+    if is_non_empty_str(business_label):
+        return f"{business_label}: {trade_type} in {primary_locality} for {services}. WhatsApp contact available."
+    return f"{trade_type} in {primary_locality} for {services}. WhatsApp contact available."
+
+
+def build_canonical_slug_hint(brief: dict[str, Any]) -> str:
+    trade_type = brief.get("trade_type")
+    primary_locality = brief.get("primary_locality")
+    if not is_non_empty_str(trade_type) or not is_non_empty_str(primary_locality):
+        raise ValueError("trade_brief must contain trade_type and primary_locality")
+    raw = f"{trade_type}-{primary_locality}".strip().lower()
+    ascii_text = unicodedata.normalize("NFKD", raw).encode("ascii", "ignore").decode("ascii")
+    normalized = ascii_text if ascii_text else raw
+    normalized = normalized.replace("_", "-")
+    normalized = re.sub(r"[^\w-]+", "-", normalized, flags=re.UNICODE)
+    normalized = re.sub(r"-{2,}", "-", normalized).strip("-")
+    if not normalized:
+        raise ValueError("canonical_slug_hint could not be derived from trade_type and primary_locality")
+    return normalized
+
+
+def tier_section_status(tier_payload: dict[str, Any], section_id: str) -> str:
+    sections = tier_payload.get("sections")
+    if not isinstance(sections, dict):
+        raise ValueError("landing tier sections must be an object")
+    section_payload = sections.get(section_id)
+    if not isinstance(section_payload, dict):
+        raise ValueError(f"landing section {section_id} must be an object")
+    status = section_payload.get("render_status")
+    if status not in {"ready", "withheld"}:
+        raise ValueError(f"landing section {section_id} render_status must be ready or withheld")
+    return status
+
+
+def supported_targets_for_tier(mapping_tier: dict[str, Any], jsonld_tier: dict[str, Any]) -> list[str]:
+    return [target for target in SUPPORTED_TARGETS if target in mapping_tier and target in jsonld_tier]
 
 
 def critical_portfolio_violations(brief: dict[str, Any]) -> list[str]:
@@ -470,6 +613,277 @@ def build_expected_landing_output(
             "render_ready_tiers": render_ready_tiers,
             "content_gaps": normalized_content_gaps,
             "unresolved_inputs": normalized_unresolved_inputs,
+        },
+    }
+
+
+def build_expected_seo_output(
+    brief: dict[str, Any],
+    portfolio_output: dict[str, Any],
+    schema_mapping_output: dict[str, Any],
+    jsonld_output: dict[str, Any],
+    landing_output: dict[str, Any],
+) -> dict[str, Any]:
+    portfolio_spectrum = portfolio_output.get("portfolio_spectrum")
+    schema_mapping = schema_mapping_output.get("schema_mapping")
+    jsonld_payloads = jsonld_output.get("jsonld_payloads")
+    landing_artifact = landing_output.get("landing_artifact")
+    if not isinstance(portfolio_spectrum, dict) or not portfolio_spectrum:
+        raise ValueError("portfolio_output.portfolio_spectrum must be a non-empty object")
+    if not isinstance(schema_mapping, dict) or not schema_mapping:
+        raise ValueError("schema_mapping_output.schema_mapping must be a non-empty object")
+    if not isinstance(jsonld_payloads, dict) or not jsonld_payloads:
+        raise ValueError("jsonld_output.jsonld_payloads must be a non-empty object")
+    if not isinstance(landing_artifact, dict) or not landing_artifact:
+        raise ValueError("landing_output.landing_artifact must be a non-empty object")
+
+    portfolio_tiers = set(portfolio_spectrum.keys())
+    schema_tiers = set(schema_mapping.keys())
+    jsonld_tiers = set(jsonld_payloads.keys())
+    landing_tiers = set(landing_artifact.keys())
+    if not portfolio_tiers or portfolio_tiers != schema_tiers or schema_tiers != jsonld_tiers or jsonld_tiers != landing_tiers:
+        raise ValueError("portfolio, schema_mapping, jsonld, and landing tiers must align exactly")
+
+    business_label_present = is_non_empty_str(brief.get("business_label"))
+    trust_signals_present = is_non_empty_list(brief.get("trust_signals"))
+    differentiators_present = is_non_empty_list(brief.get("differentiators"))
+    work_hours_present = is_non_empty_str(brief.get("work_hours"))
+    primary_locality = brief.get("primary_locality")
+    if not is_non_empty_str(primary_locality):
+        raise ValueError("trade_brief.primary_locality must be a non-empty string")
+
+    used_trade_fields = {"trade_type", "primary_locality", "service_scope", "whatsapp_target"}
+    if business_label_present:
+        used_trade_fields.add("business_label")
+    landing_sections_seen: list[str] = []
+    entity_targets_seen: list[str] = []
+    unresolved_inputs_seen: list[str] = []
+    seo_artifact: dict[str, Any] = {}
+
+    for tier in ordered_tiers(list(landing_artifact.keys())):
+        tier_landing = landing_artifact.get(tier)
+        tier_portfolio = portfolio_spectrum.get(tier)
+        tier_mapping = schema_mapping.get(tier)
+        tier_jsonld = jsonld_payloads.get(tier)
+        if not isinstance(tier_landing, dict):
+            raise ValueError(f"landing_output.landing_artifact.{tier} must be an object")
+        if not isinstance(tier_portfolio, dict):
+            raise ValueError(f"portfolio_output.portfolio_spectrum.{tier} must be an object")
+        if not isinstance(tier_mapping, dict) or not tier_mapping:
+            raise ValueError(f"schema_mapping_output.schema_mapping.{tier} must be a non-empty object")
+        if not isinstance(tier_jsonld, dict) or not tier_jsonld:
+            raise ValueError(f"jsonld_output.jsonld_payloads.{tier} must be a non-empty object")
+
+        rendering_handoff = tier_landing.get("rendering_handoff")
+        if not isinstance(rendering_handoff, dict):
+            raise ValueError(f"landing_output.landing_artifact.{tier}.rendering_handoff must be an object")
+        planned_section_order = rendering_handoff.get("planned_section_order")
+        if not is_non_empty_list(planned_section_order):
+            raise ValueError(f"landing_output.landing_artifact.{tier}.rendering_handoff.planned_section_order must be a non-empty list")
+
+        landing_sections_seen.extend([section for section in planned_section_order if section not in landing_sections_seen])
+
+        service_section = "service-summary" if "service-summary" in planned_section_order else "service-list" if "service-list" in planned_section_order else None
+        if service_section is None:
+            raise ValueError(f"landing_output.landing_artifact.{tier} must include service-summary or service-list")
+
+        hero_ready = tier_section_status(tier_landing, "hero") == "ready"
+        service_ready = tier_section_status(tier_landing, service_section) == "ready"
+        whatsapp_ready = tier_section_status(tier_landing, "whatsapp-cta") == "ready"
+        if not (hero_ready and service_ready and whatsapp_ready):
+            raise ValueError(f"{tier} SEO artifact requires hero, {service_section}, and whatsapp-cta to be ready")
+
+        if "trust-strip" in planned_section_order:
+            if trust_signals_present:
+                used_trade_fields.add("trust_signals")
+            if differentiators_present:
+                used_trade_fields.add("differentiators")
+        if "hours" in planned_section_order and work_hours_present:
+            used_trade_fields.add("work_hours")
+
+        for target in supported_targets_for_tier(tier_mapping, tier_jsonld):
+            if target not in entity_targets_seen:
+                entity_targets_seen.append(target)
+
+        landing_jsonld = tier_landing.get("structured_data", {}).get("page_level_jsonld")
+        if landing_jsonld != tier_jsonld:
+            raise ValueError(f"landing_output.landing_artifact.{tier}.structured_data.page_level_jsonld must match jsonld_output.jsonld_payloads.{tier}")
+        entity_targets = supported_targets_for_tier(tier_mapping, tier_jsonld)
+        if not entity_targets:
+            raise ValueError(f"{tier} must include at least one supported entity target")
+
+        locality_values: list[str] = [primary_locality]
+        for target in entity_targets:
+            mapping_target = tier_mapping.get(target)
+            if not isinstance(mapping_target, dict):
+                raise ValueError(f"schema_mapping_output.schema_mapping.{tier}.{target} must be an object")
+            entity_map = mapping_target.get("entity_map")
+            if not isinstance(entity_map, list):
+                raise ValueError(f"schema_mapping_output.schema_mapping.{tier}.{target}.entity_map must be a list")
+            row_map = mapping_row_map(entity_map)
+            area_served = row_map.get("areaServed", {}).get("resolved_value")
+            if not is_non_empty_str(area_served):
+                raise ValueError(f"schema_mapping_output.schema_mapping.{tier}.{target}.areaServed resolved_value is required")
+            locality_values.append(area_served)
+
+            jsonld_target = tier_jsonld.get(target)
+            if not isinstance(jsonld_target, dict):
+                raise ValueError(f"jsonld_output.jsonld_payloads.{tier}.{target} must be an object")
+            jsonld_area_served = jsonld_target.get("areaServed")
+            if not is_non_empty_str(jsonld_area_served):
+                raise ValueError(f"jsonld_output.jsonld_payloads.{tier}.{target}.areaServed is required")
+            locality_values.append(jsonld_area_served)
+
+        landing_sections = tier_landing.get("sections")
+        if not isinstance(landing_sections, dict):
+            raise ValueError(f"landing_output.landing_artifact.{tier}.sections must be an object")
+        for section_id in ("hero", "footer-contact"):
+            section_payload = landing_sections.get(section_id)
+            if not isinstance(section_payload, dict):
+                continue
+            locality_slot = section_slot_map(section_payload).get("primary_locality")
+            if isinstance(locality_slot, dict) and locality_slot.get("status") == "resolved":
+                locality_value = locality_slot.get("value")
+                if is_non_empty_str(locality_value):
+                    locality_values.append(locality_value)
+
+        if any(value != primary_locality for value in locality_values):
+            raise ValueError(f"{tier} locality values must remain exactly aligned to trade_brief.primary_locality")
+
+        secondary_intents: list[str] = ["service_scope_review"]
+        if "trust-strip" in planned_section_order and tier_section_status(tier_landing, "trust-strip") == "ready":
+            secondary_intents.append("trust_review")
+        if "hours" in planned_section_order and tier_section_status(tier_landing, "hours") == "ready":
+            secondary_intents.append("hours_check")
+        if (
+            ("footer-contact" in planned_section_order and tier_section_status(tier_landing, "footer-contact") == "ready")
+            or hero_ready
+        ):
+            secondary_intents.append("location_confirmation")
+
+        section_headings: list[dict[str, Any]] = []
+        for section_id in planned_section_order:
+            status = tier_section_status(tier_landing, section_id)
+            if section_id == "hero":
+                text = build_seo_h1(brief)
+                level = "h1"
+            else:
+                if section_id not in SEO_HEADING_TEXT:
+                    raise ValueError(f"Unsupported SEO heading section {section_id}")
+                text = SEO_HEADING_TEXT[section_id]
+                level = "h2"
+            section_headings.append(
+                {
+                    "section": section_id,
+                    "status": status,
+                    "level": level,
+                    "text": text,
+                }
+            )
+
+        missing_identity_fields = ["business_label"] if not business_label_present else []
+        missing_trust_signals = ["trust_signals"] if "trust-strip" in planned_section_order and not trust_signals_present else []
+        missing_supporting_assets: list[str] = []
+        if "gallery" in planned_section_order and tier_section_status(tier_landing, "gallery") == "withheld":
+            missing_supporting_assets.append("gallery_assets")
+        if "video-anchor" in planned_section_order and tier_section_status(tier_landing, "video-anchor") == "withheld":
+            missing_supporting_assets.append("video_asset_or_video_slot")
+        if "reviews" in planned_section_order and tier_section_status(tier_landing, "reviews") == "withheld":
+            missing_supporting_assets.append("review_items")
+
+        identity_gap = bool(missing_identity_fields)
+        trust_gap = bool(missing_trust_signals)
+        hours_gap = "hours" in planned_section_order and tier_section_status(tier_landing, "hours") == "withheld"
+        supporting_assets_gap = bool(missing_supporting_assets)
+
+        thin_content_reasons: list[str] = []
+        if identity_gap:
+            thin_content_reasons.append("missing_business_label")
+            unresolved_inputs_seen.append("business_label")
+        if trust_gap:
+            thin_content_reasons.append("missing_trust_signals")
+            unresolved_inputs_seen.append("trust_signals")
+        if hours_gap:
+            thin_content_reasons.append("missing_work_hours")
+            unresolved_inputs_seen.append("work_hours")
+        if supporting_assets_gap:
+            thin_content_reasons.append("missing_supporting_assets")
+            unresolved_inputs_seen.extend(missing_supporting_assets)
+
+        if not thin_content_reasons:
+            thin_content_level = "low"
+        elif identity_gap and trust_gap and supporting_assets_gap:
+            thin_content_level = "high"
+        else:
+            thin_content_level = "medium"
+
+        seo_artifact[tier] = {
+            "metadata": {
+                "title": build_seo_title(brief),
+                "meta_description": build_meta_description(brief),
+                "canonical_slug_hint": build_canonical_slug_hint(brief),
+            },
+            "intent_model": {
+                "primary_intent": "local_service_contact",
+                "secondary_intents": secondary_intents,
+                "intent_confidence": "high"
+                if (hero_ready and service_ready and whatsapp_ready and (
+                    ("trust-strip" in planned_section_order and tier_section_status(tier_landing, "trust-strip") == "ready")
+                    or ("hours" in planned_section_order and tier_section_status(tier_landing, "hours") == "ready")
+                ))
+                else "medium",
+            },
+            "heading_plan": {
+                "h1": build_seo_h1(brief),
+                "section_headings": section_headings,
+                "heading_alignment_rules": list(SEO_HEADING_ALIGNMENT_RULES),
+            },
+            "local_seo": {
+                "primary_locality": primary_locality,
+                "service_area_focus": {
+                    "mode": "single_locality",
+                    "localities": [primary_locality],
+                },
+                "locality_placement_rules": {
+                    "required_fields": ["metadata.title", "metadata.meta_description", "heading_plan.h1"],
+                    "supporting_sections": [section for section in ("hero", "footer-contact") if section in planned_section_order],
+                    "expansion_mode": "exact_primary_locality_only",
+                },
+                "locality_confidence": "exact",
+            },
+            "structured_search_support": {
+                "jsonld_status": "attached",
+                "entity_targets": entity_targets,
+            },
+            "seo_gaps": {
+                "missing_identity_fields": missing_identity_fields,
+                "missing_trust_signals": missing_trust_signals,
+                "missing_supporting_assets": missing_supporting_assets,
+                "ambiguous_targeting": {
+                    "status": "clear",
+                    "reasons": [],
+                },
+                "thin_content_risk": {
+                    "level": thin_content_level,
+                    "reasons": thin_content_reasons,
+                },
+            },
+        }
+
+    unresolved_inputs = [field for field in SEO_UNRESOLVED_INPUT_ORDER if field in dedupe_preserve(unresolved_inputs_seen)]
+    trade_brief_fields = [field for field in SEO_FIELD_ORDER if field in used_trade_fields]
+
+    return {
+        "seo_artifact": seo_artifact,
+        "source_evidence": {
+            "trade_brief_fields": trade_brief_fields,
+            "landing_sections": landing_sections_seen,
+            "entity_targets": entity_targets_seen,
+        },
+        "implementation_handoff": {
+            "render_requirements": list(SEO_RENDER_REQUIREMENTS),
+            "unresolved_inputs": unresolved_inputs,
+            "validation_priorities": list(SEO_VALIDATION_PRIORITIES),
         },
     }
 
@@ -1382,6 +1796,79 @@ def validate_landing_output(
     return meta
 
 
+def validate_seo_output(
+    brief: dict[str, Any],
+    portfolio_output: Any,
+    schema_mapping_output: Any,
+    jsonld_output: Any,
+    landing_output: Any,
+    payload: Any,
+    failures: list[dict[str, Any]],
+) -> dict[str, Any]:
+    meta = {
+        "tiers": set(),
+        "payloads": {},
+        "missing_identity_fields": set(),
+        "unresolved_inputs": set(),
+    }
+    if not isinstance(payload, dict):
+        add_failure(failures, "seo.type", "seo_output must be an object", "seo_output")
+        return meta
+
+    seo_artifact = payload.get("seo_artifact")
+    if not isinstance(seo_artifact, dict) or not seo_artifact:
+        add_failure(
+            failures,
+            "seo.missing_artifact",
+            "seo_output.seo_artifact must be a non-empty object",
+            "seo_output.seo_artifact",
+        )
+        return meta
+
+    meta["tiers"] = set(seo_artifact.keys())
+    meta["payloads"] = seo_artifact
+
+    handoff = payload.get("implementation_handoff")
+    if isinstance(handoff, dict) and isinstance(handoff.get("unresolved_inputs"), list):
+        meta["unresolved_inputs"] = set(handoff["unresolved_inputs"])
+
+    for tier_payload in seo_artifact.values():
+        if not isinstance(tier_payload, dict):
+            continue
+        seo_gaps = tier_payload.get("seo_gaps")
+        if isinstance(seo_gaps, dict) and isinstance(seo_gaps.get("missing_identity_fields"), list):
+            meta["missing_identity_fields"].update(seo_gaps["missing_identity_fields"])
+
+    try:
+        expected_payload = build_expected_seo_output(
+            brief,
+            portfolio_output if isinstance(portfolio_output, dict) else {},
+            schema_mapping_output if isinstance(schema_mapping_output, dict) else {},
+            jsonld_output if isinstance(jsonld_output, dict) else {},
+            landing_output if isinstance(landing_output, dict) else {},
+        )
+    except ValueError as exc:
+        add_failure(
+            failures,
+            "seo.expected_build",
+            str(exc),
+            "seo_output",
+        )
+        return meta
+
+    diff_keys = diff_paths(payload, expected_payload, "seo_output")
+    if diff_keys:
+        for diff_key in diff_keys[:12]:
+            add_failure(
+                failures,
+                "seo.diff",
+                "seo_output does not match the expected deterministic SEO artifact",
+                diff_key,
+            )
+
+    return meta
+
+
 def cross_stage_target_alignment(
     portfolio_meta: dict[str, Any] | None,
     mapping_meta: dict[str, Any] | None,
@@ -1456,6 +1943,7 @@ def cross_stage_gap_propagation(
     mapping_meta: dict[str, Any] | None,
     jsonld_meta: dict[str, Any] | None,
     landing_meta: dict[str, Any] | None,
+    seo_meta: dict[str, Any] | None,
     failures: list[dict[str, Any]],
 ) -> bool:
     start = len(failures)
@@ -1491,6 +1979,21 @@ def cross_stage_gap_propagation(
                     "cross.gap.business_label_landing_unresolved",
                     "business_label must remain unresolved in landing_output.implementation_handoff.unresolved_inputs",
                     "landing_output.implementation_handoff.unresolved_inputs",
+                )
+        if seo_meta:
+            if "business_label" not in seo_meta["missing_identity_fields"]:
+                add_failure(
+                    failures,
+                    "cross.gap.business_label_seo",
+                    "business_label gap must propagate into seo_output.seo_artifact.*.seo_gaps.missing_identity_fields",
+                    "seo_output.seo_artifact",
+                )
+            if "business_label" not in seo_meta["unresolved_inputs"]:
+                add_failure(
+                    failures,
+                    "cross.gap.business_label_seo_unresolved",
+                    "business_label must remain unresolved in seo_output.implementation_handoff.unresolved_inputs",
+                    "seo_output.implementation_handoff.unresolved_inputs",
                 )
     return len(failures) == start
 
@@ -1609,7 +2112,7 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
         "result": "fail",
         "case_id": "",
         "bundle_version": None,
-        "stage_results": {"portfolio": "skipped", "mapping": "skipped", "jsonld": "skipped", "landing": "skipped"},
+        "stage_results": {"portfolio": "skipped", "mapping": "skipped", "jsonld": "skipped", "landing": "skipped", "seo": "skipped"},
         "cross_stage_results": {
             "target_alignment": "pass",
             "resolved_value_integrity": "pass",
@@ -1627,11 +2130,11 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
     report["case_id"] = bundle.get("case_id", "")
     report["bundle_version"] = bundle.get("pipeline_bundle_version")
 
-    if bundle.get("pipeline_bundle_version") != "1.1":
+    if bundle.get("pipeline_bundle_version") not in ALLOWED_BUNDLE_VERSIONS:
         add_failure(
             failures,
             "bundle.version",
-            "pipeline_bundle_version must be 1.1",
+            f"pipeline_bundle_version must be one of {list(ALLOWED_BUNDLE_VERSIONS)}",
             "pipeline_bundle_version",
         )
     if not is_non_empty_str(bundle.get("case_id")):
@@ -1706,6 +2209,21 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
                     bundle_key,
                 )
 
+    if bundle.get("pipeline_bundle_version") == "1.1" and bundle.get("seo_output") is not None:
+        add_failure(
+            failures,
+            "bundle.seo_not_allowed",
+            "seo_output must be absent for pipeline_bundle_version 1.1",
+            "seo_output",
+        )
+    if bundle.get("pipeline_bundle_version") == "1.2" and block_index is None and bundle.get("seo_output") is None:
+        add_failure(
+            failures,
+            "bundle.seo_required",
+            "seo_output must be present for a non-blocked pipeline_bundle_version 1.2 bundle",
+            "seo_output",
+        )
+
     if block_stage == "portfolio-spectrum-builder":
         violations = critical_portfolio_violations(brief)
         if not violations:
@@ -1751,6 +2269,22 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
             landing_meta["payloads"] = bundle["landing_output"].get("landing_artifact", {})
         report["stage_results"]["landing"] = "pass" if len(failures) == start else "fail"
 
+    seo_meta = None
+    if bundle.get("seo_output") is not None:
+        start = len(failures)
+        seo_meta = validate_seo_output(
+            brief,
+            bundle.get("portfolio_output"),
+            bundle.get("schema_mapping_output"),
+            bundle.get("jsonld_output"),
+            bundle.get("landing_output"),
+            bundle["seo_output"],
+            failures,
+        )
+        if isinstance(bundle["seo_output"], dict):
+            seo_meta["payloads"] = bundle["seo_output"].get("seo_artifact", {})
+        report["stage_results"]["seo"] = "pass" if len(failures) == start else "fail"
+
     if block_index is not None:
         for index, (_, report_key, _, _) in enumerate(STAGE_ORDER):
             if index >= block_index:
@@ -1760,7 +2294,7 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
         report["cross_stage_results"]["target_alignment"] = "fail"
     if not cross_stage_resolved_value_integrity(brief, mapping_meta, failures):
         report["cross_stage_results"]["resolved_value_integrity"] = "fail"
-    if not cross_stage_gap_propagation(brief, mapping_meta, jsonld_meta, landing_meta, failures):
+    if not cross_stage_gap_propagation(brief, mapping_meta, jsonld_meta, landing_meta, seo_meta, failures):
         report["cross_stage_results"]["gap_propagation"] = "fail"
     if not cross_stage_no_invented_conditionals(brief, mapping_meta, jsonld_meta, landing_meta, failures):
         report["cross_stage_results"]["no_invented_conditionals"] = "fail"
@@ -1784,7 +2318,7 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate the structured output pipeline V1.1 bundle.")
+    parser = argparse.ArgumentParser(description="Validate the structured output pipeline bundle.")
     parser.add_argument("--bundle", required=True, help="Path to the pipeline bundle YAML or JSON file.")
     parser.add_argument(
         "--snapshot",
