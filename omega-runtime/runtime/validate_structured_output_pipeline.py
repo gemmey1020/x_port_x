@@ -15,14 +15,20 @@ import yaml
 SUPPORTED_TIERS = ("lite", "default", "premium")
 SUPPORTED_TARGETS = ("LocalBusiness", "ProfessionalService")
 REQUIRED_BRIEF_FIELDS = ("trade_type", "primary_locality", "service_scope", "whatsapp_target")
-ALLOWED_BUNDLE_VERSIONS = ("1.1", "1.2")
+ALLOWED_BUNDLE_VERSIONS = ("1.1", "1.2", "1.3.1")
 STAGE_ORDER = (
     ("portfolio-spectrum-builder", "portfolio", "portfolio_output", True),
     ("schema-mapper", "mapping", "schema_mapping_output", True),
     ("jsonld-generator", "jsonld", "jsonld_output", True),
     ("landing-generator", "landing", "landing_output", False),
     ("seo-artifact-generator", "seo", "seo_output", False),
+    ("render-artifact-generator", "render", "render_output", False),
 )
+VERSION_STAGE_COUNTS = {
+    "1.1": 4,
+    "1.2": 5,
+    "1.3.1": 6,
+}
 ALLOWED_BLOCK_SIGNALS = {"Ω_INSUFFICIENT_DATA"}
 ASSET_GAP_TOKENS = ("gallery_assets", "video_asset_or_video_slot", "review_items")
 LANDING_FIELD_ORDER = (
@@ -89,6 +95,13 @@ SEO_VALIDATION_PRIORITIES = (
     "validate_jsonld_linkage",
     "validate_gap_preservation",
 )
+
+
+def active_stage_specs(bundle_version: Any) -> tuple[tuple[str, str, str, bool], ...]:
+    count = VERSION_STAGE_COUNTS.get(bundle_version)
+    if count is None:
+        return STAGE_ORDER
+    return STAGE_ORDER[:count]
 
 
 def load_document(path: Path) -> Any:
@@ -324,6 +337,60 @@ def section_slot_map(section_payload: dict[str, Any]) -> dict[str, dict[str, Any
         slot["slot_id"]: slot
         for slot in slots
         if isinstance(slot, dict) and is_non_empty_str(slot.get("slot_id"))
+    }
+
+
+def ordered_section_slots(section_payload: dict[str, Any], section_path: str) -> list[dict[str, Any]]:
+    slot_order = section_payload.get("slot_order")
+    slots = section_payload.get("slots")
+    if not isinstance(slot_order, list):
+        raise ValueError(f"{section_path}.slot_order must be a list")
+    if not isinstance(slots, list):
+        raise ValueError(f"{section_path}.slots must be a list")
+
+    slot_map: dict[str, dict[str, Any]] = {}
+    for index, slot in enumerate(slots):
+        if not isinstance(slot, dict):
+            raise ValueError(f"{section_path}.slots[{index}] must be an object")
+        slot_id = slot.get("slot_id")
+        if not is_non_empty_str(slot_id):
+            raise ValueError(f"{section_path}.slots[{index}].slot_id must be a non-empty string")
+        if slot_id in slot_map:
+            raise ValueError(f"{section_path}.slots contains duplicate slot_id {slot_id}")
+        slot_map[slot_id] = slot
+
+    ordered_slots: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, slot_id in enumerate(slot_order):
+        if not is_non_empty_str(slot_id):
+            raise ValueError(f"{section_path}.slot_order[{index}] must be a non-empty string")
+        if slot_id in seen:
+            raise ValueError(f"{section_path}.slot_order contains duplicate slot_id {slot_id}")
+        if slot_id not in slot_map:
+            raise ValueError(f"{section_path}.slot_order references missing slot_id {slot_id}")
+        seen.add(slot_id)
+        ordered_slots.append(slot_map[slot_id])
+
+    extra_slot_ids = [slot_id for slot_id in slot_map if slot_id not in seen]
+    if extra_slot_ids:
+        raise ValueError(f"{section_path}.slots contains slot_ids not listed in slot_order: {sorted(extra_slot_ids)}")
+    return ordered_slots
+
+
+def expected_render_cta(landing_cta_primary: dict[str, Any], tier_path: str) -> dict[str, Any]:
+    action = landing_cta_primary.get("action")
+    target = landing_cta_primary.get("target")
+    placements = landing_cta_primary.get("placements")
+    if not is_non_empty_str(action):
+        raise ValueError(f"{tier_path}.cta.primary.action must be a non-empty string")
+    if not is_non_empty_str(target):
+        raise ValueError(f"{tier_path}.cta.primary.target must be a non-empty string")
+    if not isinstance(placements, list):
+        raise ValueError(f"{tier_path}.cta.primary.placements must be a list")
+    return {
+        "action": action,
+        "target": target,
+        "placements": list(placements),
     }
 
 
@@ -885,6 +952,184 @@ def build_expected_seo_output(
             "unresolved_inputs": unresolved_inputs,
             "validation_priorities": list(SEO_VALIDATION_PRIORITIES),
         },
+    }
+
+
+def build_expected_render_output(
+    landing_output: dict[str, Any],
+    seo_output: dict[str, Any],
+    jsonld_output: dict[str, Any],
+) -> dict[str, Any]:
+    landing_artifact = landing_output.get("landing_artifact")
+    seo_artifact = seo_output.get("seo_artifact")
+    jsonld_payloads = jsonld_output.get("jsonld_payloads")
+    if not isinstance(landing_artifact, dict) or not landing_artifact:
+        raise ValueError("landing_output.landing_artifact must be a non-empty object")
+    if not isinstance(seo_artifact, dict) or not seo_artifact:
+        raise ValueError("seo_output.seo_artifact must be a non-empty object")
+    if not isinstance(jsonld_payloads, dict) or not jsonld_payloads:
+        raise ValueError("jsonld_output.jsonld_payloads must be a non-empty object")
+
+    landing_tiers = set(landing_artifact.keys())
+    seo_tiers = set(seo_artifact.keys())
+    jsonld_tiers = set(jsonld_payloads.keys())
+    if not landing_tiers or landing_tiers != seo_tiers or seo_tiers != jsonld_tiers:
+        raise ValueError("landing, seo, and jsonld tiers must align exactly")
+
+    render_artifact: dict[str, Any] = {}
+    for tier in ordered_tiers(list(landing_artifact.keys())):
+        tier_landing = landing_artifact.get(tier)
+        tier_seo = seo_artifact.get(tier)
+        tier_jsonld = jsonld_payloads.get(tier)
+        tier_path = f"render_output.render_artifact.{tier}"
+        if not isinstance(tier_landing, dict):
+            raise ValueError(f"landing_output.landing_artifact.{tier} must be an object")
+        if not isinstance(tier_seo, dict):
+            raise ValueError(f"seo_output.seo_artifact.{tier} must be an object")
+        if not isinstance(tier_jsonld, dict) or not tier_jsonld:
+            raise ValueError(f"jsonld_output.jsonld_payloads.{tier} must be a non-empty object")
+
+        rendering_handoff = tier_landing.get("rendering_handoff")
+        if not isinstance(rendering_handoff, dict):
+            raise ValueError(f"landing_output.landing_artifact.{tier}.rendering_handoff must be an object")
+        planned_section_order = rendering_handoff.get("planned_section_order")
+        renderable_section_order = rendering_handoff.get("renderable_section_order")
+        if not isinstance(planned_section_order, list):
+            raise ValueError(f"landing_output.landing_artifact.{tier}.rendering_handoff.planned_section_order must be a list")
+        if not isinstance(renderable_section_order, list):
+            raise ValueError(f"landing_output.landing_artifact.{tier}.rendering_handoff.renderable_section_order must be a list")
+
+        tier_sections = tier_landing.get("sections")
+        if not isinstance(tier_sections, dict):
+            raise ValueError(f"landing_output.landing_artifact.{tier}.sections must be an object")
+
+        section_headings = tier_seo.get("heading_plan", {}).get("section_headings")
+        if not isinstance(section_headings, list):
+            raise ValueError(f"seo_output.seo_artifact.{tier}.heading_plan.section_headings must be a list")
+
+        cta_primary = tier_landing.get("cta", {}).get("primary")
+        if not isinstance(cta_primary, dict):
+            raise ValueError(f"landing_output.landing_artifact.{tier}.cta.primary must be an object")
+
+        body_sections: dict[str, Any] = {}
+        unresolved_slot_tokens: list[str] = []
+        required_inputs: list[str] = []
+        withheld_sections: list[str] = []
+
+        for section_id in planned_section_order:
+            section_payload = tier_sections.get(section_id)
+            if not isinstance(section_payload, dict):
+                raise ValueError(f"landing_output.landing_artifact.{tier}.sections.{section_id} must be an object")
+            render_status = section_payload.get("render_status")
+            if render_status not in {"ready", "withheld"}:
+                raise ValueError(f"landing_output.landing_artifact.{tier}.sections.{section_id}.render_status must be ready or withheld")
+            if render_status == "withheld":
+                withheld_sections.append(section_id)
+
+        for section_id in renderable_section_order:
+            if section_id not in tier_sections:
+                raise ValueError(f"landing_output.landing_artifact.{tier}.sections must contain renderable section {section_id}")
+            section_payload = tier_sections[section_id]
+            if section_payload.get("render_status") != "ready":
+                raise ValueError(f"landing_output.landing_artifact.{tier}.sections.{section_id}.render_status must be ready")
+
+            heading_rows = [
+                row for row in section_headings
+                if isinstance(row, dict) and row.get("section") == section_id
+            ]
+            if len(heading_rows) != 1:
+                raise ValueError(f"seo_output.seo_artifact.{tier}.heading_plan.section_headings must contain exactly one row for {section_id}")
+            heading_row = heading_rows[0]
+            if heading_row.get("status") != "ready":
+                raise ValueError(f"seo_output.seo_artifact.{tier}.heading_plan.section_headings row for {section_id} must be ready")
+            if not is_non_empty_str(heading_row.get("level")):
+                raise ValueError(f"seo_output.seo_artifact.{tier}.heading_plan.section_headings row for {section_id} must contain level")
+            if not is_non_empty_str(heading_row.get("text")):
+                raise ValueError(f"seo_output.seo_artifact.{tier}.heading_plan.section_headings row for {section_id} must contain text")
+
+            rendered_slots: list[dict[str, Any]] = []
+            for slot in ordered_section_slots(section_payload, f"landing_output.landing_artifact.{tier}.sections.{section_id}"):
+                slot_id = slot["slot_id"]
+                status = slot.get("status")
+                if status == "resolved":
+                    rendered_slots.append(
+                        {
+                            "slot_id": slot_id,
+                            "status": "resolved",
+                            "value": slot.get("value"),
+                            "fallback": None,
+                        }
+                    )
+                elif status == "unresolved":
+                    fallback = slot.get("required_input")
+                    if not is_non_empty_str(fallback):
+                        raise ValueError(f"landing_output.landing_artifact.{tier}.sections.{section_id}.slots.{slot_id} unresolved slot must contain required_input")
+                    rendered_slots.append(
+                        {
+                            "slot_id": slot_id,
+                            "status": "unresolved",
+                            "value": None,
+                            "fallback": fallback,
+                        }
+                    )
+                    unresolved_slot_tokens.append(f"{section_id}.{slot_id}")
+                    if fallback not in required_inputs:
+                        required_inputs.append(fallback)
+                else:
+                    raise ValueError(f"landing_output.landing_artifact.{tier}.sections.{section_id}.slots.{slot_id} must use resolved or unresolved status")
+
+            body_sections[section_id] = {
+                "render_status": "ready",
+                "heading": {
+                    "level": heading_row["level"],
+                    "text": heading_row["text"],
+                },
+                "slots": rendered_slots,
+            }
+
+        for section_id in planned_section_order:
+            if section_id in renderable_section_order:
+                continue
+            section_payload = tier_sections.get(section_id)
+            if not isinstance(section_payload, dict):
+                raise ValueError(f"landing_output.landing_artifact.{tier}.sections.{section_id} must be an object")
+            if section_payload.get("render_status") != "withheld":
+                continue
+            for slot in ordered_section_slots(section_payload, f"landing_output.landing_artifact.{tier}.sections.{section_id}"):
+                if slot.get("status") != "unresolved":
+                    continue
+                fallback = slot.get("required_input")
+                if not is_non_empty_str(fallback):
+                    raise ValueError(f"landing_output.landing_artifact.{tier}.sections.{section_id}.slots.{slot.get('slot_id')} unresolved slot must contain required_input")
+                if fallback not in required_inputs:
+                    required_inputs.append(fallback)
+
+        render_artifact[tier] = {
+            "document": {
+                "lang": rendering_handoff.get("locale"),
+                "dir": rendering_handoff.get("direction"),
+                "title": tier_seo.get("metadata", {}).get("title"),
+                "meta_description": tier_seo.get("metadata", {}).get("meta_description"),
+            },
+            "head": {
+                "jsonld": tier_jsonld,
+            },
+            "body": {
+                "section_order": list(renderable_section_order),
+                "sections": body_sections,
+            },
+            "cta": {
+                "primary": expected_render_cta(cta_primary, f"landing_output.landing_artifact.{tier}"),
+            },
+            "render_notes": {
+                "withheld_sections": withheld_sections,
+                "unresolved_slots": unresolved_slot_tokens,
+                "required_inputs": required_inputs,
+            },
+        }
+
+    return {
+        "render_artifact": render_artifact,
     }
 
 
@@ -1869,6 +2114,81 @@ def validate_seo_output(
     return meta
 
 
+def validate_render_output(
+    landing_output: Any,
+    seo_output: Any,
+    jsonld_output: Any,
+    payload: Any,
+    failures: list[dict[str, Any]],
+) -> dict[str, Any]:
+    meta = {
+        "tiers": set(),
+        "payloads": {},
+        "section_orders": {},
+        "withheld_sections": {},
+        "unresolved_slots": {},
+        "required_inputs": {},
+    }
+    if not isinstance(payload, dict):
+        add_failure(failures, "render.type", "render_output must be an object", "render_output")
+        return meta
+
+    render_artifact = payload.get("render_artifact")
+    if not isinstance(render_artifact, dict) or not render_artifact:
+        add_failure(
+            failures,
+            "render.missing_artifact",
+            "render_output.render_artifact must be a non-empty object",
+            "render_output.render_artifact",
+        )
+        return meta
+
+    meta["tiers"] = set(render_artifact.keys())
+    meta["payloads"] = render_artifact
+
+    for tier, tier_payload in render_artifact.items():
+        if not isinstance(tier_payload, dict):
+            continue
+        body = tier_payload.get("body")
+        if isinstance(body, dict) and isinstance(body.get("section_order"), list):
+            meta["section_orders"][tier] = list(body["section_order"])
+        render_notes = tier_payload.get("render_notes")
+        if isinstance(render_notes, dict):
+            if isinstance(render_notes.get("withheld_sections"), list):
+                meta["withheld_sections"][tier] = list(render_notes["withheld_sections"])
+            if isinstance(render_notes.get("unresolved_slots"), list):
+                meta["unresolved_slots"][tier] = list(render_notes["unresolved_slots"])
+            if isinstance(render_notes.get("required_inputs"), list):
+                meta["required_inputs"][tier] = list(render_notes["required_inputs"])
+
+    try:
+        expected_payload = build_expected_render_output(
+            landing_output if isinstance(landing_output, dict) else {},
+            seo_output if isinstance(seo_output, dict) else {},
+            jsonld_output if isinstance(jsonld_output, dict) else {},
+        )
+    except ValueError as exc:
+        add_failure(
+            failures,
+            "render.expected_build",
+            str(exc),
+            "render_output",
+        )
+        return meta
+
+    diff_keys = diff_paths(payload, expected_payload, "render_output")
+    if diff_keys:
+        for diff_key in diff_keys[:15]:
+            add_failure(
+                failures,
+                "render.diff",
+                "render_output does not match the expected deterministic render artifact",
+                diff_key,
+            )
+
+    return meta
+
+
 def cross_stage_target_alignment(
     portfolio_meta: dict[str, Any] | None,
     mapping_meta: dict[str, Any] | None,
@@ -2106,18 +2426,257 @@ def cross_stage_no_invented_conditionals(
     return len(failures) == start
 
 
+def cross_stage_render_copy_integrity(
+    landing_meta: dict[str, Any] | None,
+    seo_meta: dict[str, Any] | None,
+    jsonld_meta: dict[str, Any] | None,
+    render_meta: dict[str, Any] | None,
+    failures: list[dict[str, Any]],
+) -> bool:
+    start = len(failures)
+    if not landing_meta or not seo_meta or not jsonld_meta or not render_meta:
+        return True
+
+    landing_payloads = landing_meta.get("payloads", {})
+    seo_payloads = seo_meta.get("payloads", {})
+    jsonld_payloads = jsonld_meta.get("payloads", {})
+    render_payloads = render_meta.get("payloads", {})
+
+    for tier in render_meta.get("tiers", set()):
+        landing_tier = landing_payloads.get(tier)
+        seo_tier = seo_payloads.get(tier)
+        jsonld_tier = jsonld_payloads.get(tier)
+        render_tier = render_payloads.get(tier)
+        if not isinstance(landing_tier, dict) or not isinstance(seo_tier, dict) or not isinstance(jsonld_tier, dict) or not isinstance(render_tier, dict):
+            continue
+
+        render_document = render_tier.get("document")
+        if not isinstance(render_document, dict):
+            continue
+
+        if render_document.get("title") != seo_tier.get("metadata", {}).get("title"):
+            add_failure(
+                failures,
+                "cross.render.title_copy",
+                f"{tier} render title must copy seo metadata.title exactly",
+                f"render_output.render_artifact.{tier}.document.title",
+            )
+        if render_document.get("meta_description") != seo_tier.get("metadata", {}).get("meta_description"):
+            add_failure(
+                failures,
+                "cross.render.meta_copy",
+                f"{tier} render meta_description must copy seo metadata.meta_description exactly",
+                f"render_output.render_artifact.{tier}.document.meta_description",
+            )
+
+        if render_tier.get("head", {}).get("jsonld") != jsonld_tier:
+            add_failure(
+                failures,
+                "cross.render.jsonld_copy",
+                f"{tier} render head.jsonld must copy jsonld_output exactly",
+                f"render_output.render_artifact.{tier}.head.jsonld",
+            )
+
+        landing_cta_primary = landing_tier.get("cta", {}).get("primary")
+        render_cta_primary = render_tier.get("cta", {}).get("primary")
+        if isinstance(landing_cta_primary, dict) and isinstance(render_cta_primary, dict):
+            expected_cta = {
+                "action": landing_cta_primary.get("action"),
+                "target": landing_cta_primary.get("target"),
+                "placements": list(landing_cta_primary.get("placements", []))
+                if isinstance(landing_cta_primary.get("placements"), list)
+                else landing_cta_primary.get("placements"),
+            }
+            if render_cta_primary != expected_cta:
+                add_failure(
+                    failures,
+                    "cross.render.cta_copy",
+                    f"{tier} render CTA must copy landing CTA semantics exactly",
+                    f"render_output.render_artifact.{tier}.cta.primary",
+                )
+
+        renderable_section_order = landing_tier.get("rendering_handoff", {}).get("renderable_section_order")
+        render_section_order = render_tier.get("body", {}).get("section_order")
+        if isinstance(renderable_section_order, list) and render_section_order != renderable_section_order:
+            add_failure(
+                failures,
+                "cross.render.section_order_copy",
+                f"{tier} render body.section_order must copy landing renderable_section_order exactly",
+                f"render_output.render_artifact.{tier}.body.section_order",
+            )
+
+    return len(failures) == start
+
+
+def cross_stage_render_gap_visibility(
+    landing_meta: dict[str, Any] | None,
+    render_meta: dict[str, Any] | None,
+    failures: list[dict[str, Any]],
+) -> bool:
+    start = len(failures)
+    if not landing_meta or not render_meta:
+        return True
+
+    landing_payloads = landing_meta.get("payloads", {})
+    render_payloads = render_meta.get("payloads", {})
+    for tier in render_meta.get("tiers", set()):
+        landing_tier = landing_payloads.get(tier)
+        render_tier = render_payloads.get(tier)
+        if not isinstance(landing_tier, dict) or not isinstance(render_tier, dict):
+            continue
+
+        rendering_handoff = landing_tier.get("rendering_handoff")
+        landing_sections = landing_tier.get("sections")
+        render_body = render_tier.get("body")
+        render_notes = render_tier.get("render_notes")
+        if not isinstance(rendering_handoff, dict) or not isinstance(landing_sections, dict) or not isinstance(render_body, dict) or not isinstance(render_notes, dict):
+            continue
+
+        planned_section_order = rendering_handoff.get("planned_section_order")
+        renderable_section_order = rendering_handoff.get("renderable_section_order")
+        render_sections = render_body.get("sections")
+        actual_section_order = render_body.get("section_order")
+        actual_withheld = render_notes.get("withheld_sections")
+        actual_unresolved = render_notes.get("unresolved_slots")
+        actual_required_inputs = render_notes.get("required_inputs")
+        if not isinstance(planned_section_order, list) or not isinstance(renderable_section_order, list):
+            continue
+        if not isinstance(render_sections, dict) or not isinstance(actual_section_order, list):
+            continue
+        if not isinstance(actual_withheld, list) or not isinstance(actual_unresolved, list) or not isinstance(actual_required_inputs, list):
+            continue
+
+        expected_withheld: list[str] = []
+        expected_unresolved: list[str] = []
+        expected_required_inputs: list[str] = []
+
+        for section_id in planned_section_order:
+            section_payload = landing_sections.get(section_id)
+            if not isinstance(section_payload, dict):
+                continue
+            if section_payload.get("render_status") == "withheld":
+                expected_withheld.append(section_id)
+
+        for section_id in renderable_section_order:
+            section_payload = landing_sections.get(section_id)
+            if not isinstance(section_payload, dict):
+                continue
+            for slot in ordered_section_slots(section_payload, f"landing_output.landing_artifact.{tier}.sections.{section_id}"):
+                if slot.get("status") != "unresolved":
+                    continue
+                fallback = slot.get("required_input")
+                if not is_non_empty_str(fallback):
+                    continue
+                token = f"{section_id}.{slot['slot_id']}"
+                expected_unresolved.append(token)
+                if fallback not in expected_required_inputs:
+                    expected_required_inputs.append(fallback)
+
+                render_section = render_sections.get(section_id)
+                if not isinstance(render_section, dict):
+                    add_failure(
+                        failures,
+                        "cross.render.unresolved_hidden",
+                        f"{tier} render body.sections must retain rendered section {section_id}",
+                        f"render_output.render_artifact.{tier}.body.sections.{section_id}",
+                    )
+                    continue
+                render_slots = render_section.get("slots")
+                if not isinstance(render_slots, list):
+                    add_failure(
+                        failures,
+                        "cross.render.unresolved_hidden",
+                        f"{tier} render section {section_id} must retain slot list visibility",
+                        f"render_output.render_artifact.{tier}.body.sections.{section_id}.slots",
+                    )
+                    continue
+                matching_render_slot = None
+                for render_slot in render_slots:
+                    if isinstance(render_slot, dict) and render_slot.get("slot_id") == slot["slot_id"]:
+                        matching_render_slot = render_slot
+                        break
+                if not isinstance(matching_render_slot, dict):
+                    add_failure(
+                        failures,
+                        "cross.render.unresolved_hidden",
+                        f"{tier} unresolved slot {section_id}.{slot['slot_id']} must remain visible in render output",
+                        f"render_output.render_artifact.{tier}.body.sections.{section_id}.slots",
+                    )
+                    continue
+                if matching_render_slot.get("status") != "unresolved" or matching_render_slot.get("value") is not None or matching_render_slot.get("fallback") != fallback:
+                    add_failure(
+                        failures,
+                        "cross.render.unresolved_hidden",
+                        f"{tier} unresolved slot {section_id}.{slot['slot_id']} must preserve unresolved mapping exactly",
+                        f"render_output.render_artifact.{tier}.body.sections.{section_id}.slots",
+                    )
+
+        for section_id in expected_withheld:
+            section_payload = landing_sections.get(section_id)
+            if not isinstance(section_payload, dict):
+                continue
+            for slot in ordered_section_slots(section_payload, f"landing_output.landing_artifact.{tier}.sections.{section_id}"):
+                if slot.get("status") != "unresolved":
+                    continue
+                fallback = slot.get("required_input")
+                if is_non_empty_str(fallback) and fallback not in expected_required_inputs:
+                    expected_required_inputs.append(fallback)
+
+        unexpected_rendered = [section_id for section_id in actual_section_order if section_id in expected_withheld]
+        if unexpected_rendered:
+            add_failure(
+                failures,
+                "cross.render.withheld_reintroduced",
+                f"{tier} render output must not reintroduce withheld sections {unexpected_rendered}",
+                f"render_output.render_artifact.{tier}.body.section_order",
+            )
+        if any(section_id in expected_withheld for section_id in render_sections):
+            add_failure(
+                failures,
+                "cross.render.withheld_reintroduced",
+                f"{tier} render body.sections must exclude withheld landing sections",
+                f"render_output.render_artifact.{tier}.body.sections",
+            )
+
+        if actual_withheld != expected_withheld:
+            add_failure(
+                failures,
+                "cross.render.withheld_reintroduced",
+                f"{tier} render_notes.withheld_sections must match landing withheld sections exactly",
+                f"render_output.render_artifact.{tier}.render_notes.withheld_sections",
+            )
+        if actual_unresolved != expected_unresolved:
+            add_failure(
+                failures,
+                "cross.render.unresolved_hidden",
+                f"{tier} render_notes.unresolved_slots must expose unresolved rendered slots in exact order",
+                f"render_output.render_artifact.{tier}.render_notes.unresolved_slots",
+            )
+        if actual_required_inputs != expected_required_inputs:
+            add_failure(
+                failures,
+                "cross.render.required_inputs_visibility",
+                f"{tier} render_notes.required_inputs must preserve all visible gaps in exact order",
+                f"render_output.render_artifact.{tier}.render_notes.required_inputs",
+            )
+
+    return len(failures) == start
+
+
 def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str, Any]:
     failures: list[dict[str, Any]] = []
     report = {
         "result": "fail",
         "case_id": "",
         "bundle_version": None,
-        "stage_results": {"portfolio": "skipped", "mapping": "skipped", "jsonld": "skipped", "landing": "skipped", "seo": "skipped"},
+        "stage_results": {"portfolio": "skipped", "mapping": "skipped", "jsonld": "skipped", "landing": "skipped", "seo": "skipped", "render": "skipped"},
         "cross_stage_results": {
             "target_alignment": "pass",
             "resolved_value_integrity": "pass",
             "gap_propagation": "pass",
             "no_invented_conditionals": "pass",
+            "render_copy_integrity": "skipped",
+            "render_gap_visibility": "skipped",
         },
         "snapshot_comparison": {"status": "skipped", "diff_keys": []},
         "failures": failures,
@@ -2129,6 +2688,7 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
 
     report["case_id"] = bundle.get("case_id", "")
     report["bundle_version"] = bundle.get("pipeline_bundle_version")
+    stage_specs = active_stage_specs(report["bundle_version"])
 
     if bundle.get("pipeline_bundle_version") not in ALLOWED_BUNDLE_VERSIONS:
         add_failure(
@@ -2152,7 +2712,7 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
 
     block_stage = expected.get("block_stage")
     expected_signal = expected.get("signal")
-    valid_block_stages = {stage_name for stage_name, _, _, _ in STAGE_ORDER}
+    valid_block_stages = {stage_name for stage_name, _, _, _ in stage_specs}
     if block_stage is not None and block_stage not in valid_block_stages:
         add_failure(
             failures,
@@ -2178,12 +2738,12 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
 
     block_index = None
     if block_stage is not None:
-        for index, (stage_name, _, _, _) in enumerate(STAGE_ORDER):
+        for index, (stage_name, _, _, _) in enumerate(stage_specs):
             if stage_name == block_stage:
                 block_index = index
                 break
 
-    for index, (stage_name, report_key, bundle_key, required_on_nonblocked) in enumerate(STAGE_ORDER):
+    for index, (stage_name, report_key, bundle_key, required_on_nonblocked) in enumerate(stage_specs):
         present = bundle_key in bundle and bundle[bundle_key] is not None
         if block_index is None:
             if required_on_nonblocked and not present:
@@ -2222,6 +2782,20 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
             "bundle.seo_required",
             "seo_output must be present for a non-blocked pipeline_bundle_version 1.2 bundle",
             "seo_output",
+        )
+    if bundle.get("pipeline_bundle_version") in {"1.1", "1.2"} and bundle.get("render_output") is not None:
+        add_failure(
+            failures,
+            "bundle.render_not_allowed",
+            f"render_output must be absent for pipeline_bundle_version {bundle.get('pipeline_bundle_version')}",
+            "render_output",
+        )
+    if bundle.get("pipeline_bundle_version") == "1.3.1" and block_index is None and bundle.get("render_output") is None:
+        add_failure(
+            failures,
+            "bundle.render_required",
+            "render_output must be present for a non-blocked pipeline_bundle_version 1.3.1 bundle",
+            "render_output",
         )
 
     if block_stage == "portfolio-spectrum-builder":
@@ -2285,8 +2859,22 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
             seo_meta["payloads"] = bundle["seo_output"].get("seo_artifact", {})
         report["stage_results"]["seo"] = "pass" if len(failures) == start else "fail"
 
+    render_meta = None
+    if bundle.get("render_output") is not None:
+        start = len(failures)
+        render_meta = validate_render_output(
+            bundle.get("landing_output"),
+            bundle.get("seo_output"),
+            bundle.get("jsonld_output"),
+            bundle["render_output"],
+            failures,
+        )
+        if isinstance(bundle["render_output"], dict):
+            render_meta["payloads"] = bundle["render_output"].get("render_artifact", {})
+        report["stage_results"]["render"] = "pass" if len(failures) == start else "fail"
+
     if block_index is not None:
-        for index, (_, report_key, _, _) in enumerate(STAGE_ORDER):
+        for index, (_, report_key, _, _) in enumerate(stage_specs):
             if index >= block_index:
                 report["stage_results"][report_key] = "skipped"
 
@@ -2298,6 +2886,13 @@ def validate_bundle(bundle: Any, snapshot_bundle: Any | None = None) -> dict[str
         report["cross_stage_results"]["gap_propagation"] = "fail"
     if not cross_stage_no_invented_conditionals(brief, mapping_meta, jsonld_meta, landing_meta, failures):
         report["cross_stage_results"]["no_invented_conditionals"] = "fail"
+    if render_meta is not None:
+        report["cross_stage_results"]["render_copy_integrity"] = "pass"
+        report["cross_stage_results"]["render_gap_visibility"] = "pass"
+        if not cross_stage_render_copy_integrity(landing_meta, seo_meta, jsonld_meta, render_meta, failures):
+            report["cross_stage_results"]["render_copy_integrity"] = "fail"
+        if not cross_stage_render_gap_visibility(landing_meta, render_meta, failures):
+            report["cross_stage_results"]["render_gap_visibility"] = "fail"
 
     if snapshot_bundle is not None:
         diff_keys = diff_paths(bundle, snapshot_bundle)
