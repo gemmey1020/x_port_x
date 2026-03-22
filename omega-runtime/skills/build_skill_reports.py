@@ -15,7 +15,10 @@ ROOT = Path(__file__).resolve().parents[2]
 CATALOG_PATH = ROOT / "omega-runtime/skills/OMEGA_SKILL_CATALOG.yaml"
 DESCRIPTIONS_DIR = ROOT / "omega-runtime/skills/descriptions"
 OUTPUT_HTML_DIR = ROOT / "output/html"
+OUTPUT_REPORTS_DIR = ROOT / "output/reports"
 MEMORY_REPORT_MD = ROOT / "output/reports/persistent-memory-status-report.md"
+UI_SKILLS_BOUNDARY_GUIDE_MD = OUTPUT_REPORTS_DIR / "ui-skills-boundary-guide.md"
+UI_SKILLS_BOUNDARY_CONTRACT_JSON = OUTPUT_REPORTS_DIR / "ui-skills-boundary-contract.json"
 PMEM = Path.home() / ".codex/skills/persistent-memory/scripts/memory_cli.py"
 SELF_LEARN = Path.home() / ".codex/skills/self-learn/scripts/run_self_learn.py"
 OPENAI_DOC_LINKS = [
@@ -30,6 +33,20 @@ OPENAI_DOC_LINKS = [
     {
         "label": "GPT-5 new params and tools",
         "url": "https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_new_params_and_tools/",
+    },
+]
+UI_GUIDE_OPENAI_DOC_LINKS = [
+    {
+        "label": "Apps SDK introduction",
+        "url": "https://developers.openai.com/apps-sdk/quickstart/#introduction",
+    },
+    {
+        "label": "Apps SDK web component",
+        "url": "https://developers.openai.com/apps-sdk/quickstart/#build-a-web-component",
+    },
+    {
+        "label": "Apps SDK decoupled pattern",
+        "url": "https://developers.openai.com/apps-sdk/build/chatgpt-ui/#decoupled-pattern",
     },
 ]
 
@@ -208,6 +225,494 @@ IMPROVE_CANDIDATES = [
         "next_ar": "يحتاج checkpoints أبسط وانتقالات أوضح بين المراحل.",
     },
 ]
+
+UI_GOVERNANCE_OVERLAY = [
+    {
+        "skill_id": "god-plan-mode",
+        "job": {
+            "ar": "يقفل الهدف، يفصل facts عن assumptions، ويربط التنفيذ بالإثبات والمخاطر قبل ما نبدأ.",
+            "en": "Locks the mission, separates facts from assumptions, and ties execution to proof and risk before work starts.",
+        },
+        "why": {
+            "ar": "يُستدعى عندما تكون المهمة المركبة محتاجة contract واضح، لا كمهارة UI تنفيذية داخل العنقود نفسه.",
+            "en": "Use it when a multi-step task needs a crisp execution contract, not as a peer UI skill inside the cluster.",
+        },
+    },
+    {
+        "skill_id": "plan-critic",
+        "job": {
+            "ar": "يضغط على الخطة قبل التنفيذ: dependency blind spots، verification theater، scope inflation، وضعف rollback.",
+            "en": "Stress-tests the plan before execution for dependency blind spots, verification theater, scope inflation, and weak rollback.",
+        },
+        "why": {
+            "ar": "يظهر كطبقة مراجعة للخطة، لا كمسار تصميم أو تحسين واجهة.",
+            "en": "It belongs to plan review, not to interface design or refinement.",
+        },
+    },
+    {
+        "skill_id": "openai-docs",
+        "job": {
+            "ar": "يستدعى فقط عندما تكون الوثائق الرسمية الحالية قد تغيّر architecture أو surface contract أو validation.",
+            "en": "Invoke it only when current official docs could change architecture, surface contracts, or validation.",
+        },
+        "why": {
+            "ar": "في هذا العنقود دوره overlay توثيقي، وليس UI design skill.",
+            "en": "Inside this cluster, it acts as a documentation overlay, not as a UI design skill.",
+        },
+    },
+]
+
+UI_COMPARISON_CONTRACT = [
+    {
+        "skill_id": "omega_ui_product_brain",
+        "display_name": "Omega UI Product Brain",
+        "layer": {"ar": "Orchestration", "en": "Orchestration"},
+        "primary_job": {
+            "ar": "يحدد mode التنفيذ، يحمي العناصر غير القابلة للكسر، ويرتّب المهارات الصحيحة بالترتيب الصحيح.",
+            "en": "Selects the execution mode, protects non-negotiables, and routes the right skills in the right order.",
+        },
+        "first_choice_when": {
+            "ar": "المهمة فيها أكثر من محور واحد: source + UX + taste + system أو فيها protected elements واضحة.",
+            "en": "The task spans multiple axes: source + UX + taste + system, or it has explicit protected elements.",
+        },
+        "do_not_use_when": {
+            "ar": "الطلب narrow وواضح ويحتاج pass واحد مباشر مثل visual critique فقط أو landing execution فقط.",
+            "en": "The task is narrow and clear enough for a single direct pass like pure visual critique or direct landing execution.",
+        },
+        "inputs": [
+            {
+                "ar": "هدف المستخدم، القيود، الـsource truth إن وجد، وما الذي لا يجب تغييره.",
+                "en": "User goal, constraints, source truth when present, and what must not change.",
+            }
+        ],
+        "outputs": [
+            {
+                "ar": "active mode، protected elements، sequence، completion lock، وما الذي يُمنع downstream skills من كسره.",
+                "en": "Active mode, protected elements, sequence, completion lock, and what downstream skills are not allowed to break.",
+            }
+        ],
+        "protected_elements": [
+            "user instruction",
+            "task constraints",
+            "source truth",
+            "cta intent",
+            "product-critical flow",
+            "information architecture",
+        ],
+        "failure_modes": [
+            {
+                "ar": "استخدام لغة orchestration بدون اتخاذ sequence فعلي.",
+                "en": "Using orchestration language without making an actual sequencing decision.",
+            },
+            {
+                "ar": "تمرير كل مهمة على كل skills بلا داعٍ.",
+                "en": "Sending every task through every skill without a reason.",
+            },
+            {
+                "ar": "السماح لـtaste أو system أن يكسرا source أو flow بصمت.",
+                "en": "Letting taste or system passes silently override source or flow.",
+            },
+        ],
+        "handoff_to": [
+            "figma_mcp_operator",
+            "product_flow_architect",
+            "ui_taste_critic",
+            "design_system_enforcer",
+            "premium_ui_generator",
+        ],
+        "overlap_with": ["frontend-skill"],
+    },
+    {
+        "skill_id": "figma_mcp_operator",
+        "display_name": "Figma MCP Operator",
+        "layer": {"ar": "Source governance", "en": "Source governance"},
+        "primary_job": {
+            "ar": "يقرأ Figma، يستخرج structure قابل للتنفيذ، يوسم deviations، ويتحقق من parity.",
+            "en": "Reads Figma, extracts implementation-relevant structure, labels deviations, and verifies parity.",
+        },
+        "first_choice_when": {
+            "ar": "هناك Figma link أو frame أو node أو طلب parity source-based.",
+            "en": "There is a Figma link, frame, node, or an explicit source-based parity request.",
+        },
+        "do_not_use_when": {
+            "ar": "لا يوجد source design والمهمة generative بحتة.",
+            "en": "There is no design source and the task is purely generative.",
+        },
+        "inputs": [
+            {
+                "ar": "رابط أو node من Figma، active mode، والسياق المطلوب الحفاظ عليه.",
+                "en": "A Figma link or node, the active mode, and the context that must be preserved.",
+            }
+        ],
+        "outputs": [
+            {
+                "ar": "extraction واضح لما هو preserved وما هو inferred وما هو changed.",
+                "en": "A clear extraction of what is preserved, inferred, and changed.",
+            }
+        ],
+        "protected_elements": ["source hierarchy", "component roles", "cta intent"],
+        "failure_modes": [
+            {
+                "ar": "قراءة screenshot-only أو ادعاء parity بدون evidence.",
+                "en": "Relying on screenshot-only reading or claiming parity without evidence.",
+            },
+            {
+                "ar": "إعادة تصميم hierarchy بصمت في faithful work.",
+                "en": "Silently redesigning hierarchy during faithful work.",
+            },
+        ],
+        "handoff_to": ["premium_ui_generator", "ui_taste_critic", "design_system_enforcer"],
+        "overlap_with": ["omega_ui_product_brain", "frontend-skill"],
+    },
+    {
+        "skill_id": "product_flow_architect",
+        "display_name": "Product Flow Architect",
+        "layer": {"ar": "Product flow diagnosis", "en": "Product flow diagnosis"},
+        "primary_job": {
+            "ar": "يفحص goal clarity، الأولوية بين الأفعال، friction، trust، والحالات الناقصة.",
+            "en": "Evaluates goal clarity, action priority, friction, trust, and missing states.",
+        },
+        "first_choice_when": {
+            "ar": "المشكلة الأساسية ليست الشكل بل task path أو conversion أو next-step clarity.",
+            "en": "The core problem is not appearance but the task path, conversion, or next-step clarity.",
+        },
+        "do_not_use_when": {
+            "ar": "الطلب visual cleanup فقط أو token consistency فقط.",
+            "en": "The request is only for visual cleanup or token consistency.",
+        },
+        "inputs": [
+            {
+                "ar": "الهدف المتوقع من المستخدم، CTA الحالية، والنقاط التي يضيع فيها المستخدم.",
+                "en": "The user's likely goal, current CTAs, and the points where users get stuck.",
+            }
+        ],
+        "outputs": [
+            {
+                "ar": "تشخيص task path + أولويات إصلاح flow + state coverage notes.",
+                "en": "A task-path diagnosis plus flow priorities and state-coverage notes.",
+            }
+        ],
+        "protected_elements": ["user goal", "primary action", "trust-sensitive steps", "critical states"],
+        "failure_modes": [
+            {
+                "ar": "حل بصري جميل لكن task path ما زال مكسورًا.",
+                "en": "A prettier surface that still leaves the task path broken.",
+            },
+            {
+                "ar": "تقديم action قبل context أو ترك success/error states غامضة.",
+                "en": "Showing action before context or leaving success/error states unclear.",
+            },
+        ],
+        "handoff_to": ["premium_ui_generator", "ui_taste_critic", "design_system_enforcer"],
+        "overlap_with": ["omega_ui_product_brain", "frontend-skill"],
+    },
+    {
+        "skill_id": "ui_taste_critic",
+        "display_name": "UI Taste Critic",
+        "layer": {"ar": "Visual critique", "en": "Visual critique"},
+        "primary_job": {
+            "ar": "يرتّب مشاكل hierarchy وspacing وCTA emphasis وpolish حسب التأثير.",
+            "en": "Prioritizes hierarchy, spacing, CTA emphasis, and polish issues by impact.",
+        },
+        "first_choice_when": {
+            "ar": "الواجهة موجودة بالفعل والمطلوب sharper taste أو critique واضح لا إعادة هيكلة منتج كاملة.",
+            "en": "The interface already exists and needs sharper taste or focused critique without a full product rethink.",
+        },
+        "do_not_use_when": {
+            "ar": "المهمة source extraction أو system audit أو raw generation فقط.",
+            "en": "The task is source extraction, a system audit, or raw generation only.",
+        },
+        "inputs": [
+            {
+                "ar": "واجهة قائمة أو mock قائم وملاحظة أن المشكلة في hierarchy أو polish.",
+                "en": "An existing UI or mock where the issue is hierarchy or polish.",
+            }
+        ],
+        "outputs": [
+            {
+                "ar": "verdict واضح + أعلى الإصلاحات تأثيرًا + premium polish pass.",
+                "en": "A clear verdict, highest-impact fixes, and a premium polish pass.",
+            }
+        ],
+        "protected_elements": ["working brand hierarchy", "existing product logic when not broken"],
+        "failure_modes": [
+            {
+                "ar": "مجاملة غامضة أو critique بلا ترتيب أولويات.",
+                "en": "Vague praise or critique with no priority order.",
+            },
+            {
+                "ar": "تحويل critique إلى redesign صامت.",
+                "en": "Letting critique silently turn into redesign.",
+            },
+        ],
+        "handoff_to": ["premium_ui_generator", "design_system_enforcer"],
+        "overlap_with": ["frontend-skill", "omega_ui_product_brain"],
+    },
+    {
+        "skill_id": "design_system_enforcer",
+        "display_name": "Design System Enforcer",
+        "layer": {"ar": "System discipline", "en": "System discipline"},
+        "primary_job": {
+            "ar": "يعيد النظام إلى الواجهة: tokens، button roles، states، spacing scale، والـresponsive invariants.",
+            "en": "Restores system behavior across tokens, button roles, states, spacing scale, and responsive invariants.",
+        },
+        "first_choice_when": {
+            "ar": "هناك drift في الأزرار أو الحقول أو المسافات أو الحالات أو قواعد الـresponsive.",
+            "en": "There is drift in buttons, fields, spacing, states, or responsive rules.",
+        },
+        "do_not_use_when": {
+            "ar": "الطلب ideation بصري أو flow redesign أو source extraction.",
+            "en": "The request is visual ideation, flow redesign, or source extraction.",
+        },
+        "inputs": [
+            {
+                "ar": "واجهة فيها قرارات متكررة لا تتصرف كقواعد.",
+                "en": "A UI where repeated decisions no longer behave like rules.",
+            }
+        ],
+        "outputs": [
+            {
+                "ar": "drift report + smallest corrections التي تعيد الانضباط بدون redesign.",
+                "en": "A drift report plus the smallest corrections that restore order without redesign.",
+            }
+        ],
+        "protected_elements": ["token roles", "component families", "emphasis rules", "responsive invariants"],
+        "failure_modes": [
+            {
+                "ar": "اعتبار أي taste preference مشكلة نظام.",
+                "en": "Treating any taste preference as a system problem.",
+            },
+            {
+                "ar": "إعادة كتابة flow بدل إصلاح consistency.",
+                "en": "Rewriting flow instead of fixing consistency.",
+            },
+        ],
+        "handoff_to": ["premium_ui_generator"],
+        "overlap_with": ["frontend-skill", "ui_taste_critic"],
+    },
+    {
+        "skill_id": "premium_ui_generator",
+        "display_name": "Premium UI Generator",
+        "layer": {"ar": "Guided implementation", "en": "Guided implementation"},
+        "primary_job": {
+            "ar": "ينفذ pass واجهة أقوى تحت mode واضح وقيود معلنة بدل premium decoration العشوائي.",
+            "en": "Executes a stronger UI pass under a clear mode and explicit constraints instead of random premium decoration.",
+        },
+        "first_choice_when": {
+            "ar": "نحتاج تنفيذ refinement أو redesign controlled بعد وجود source/flow/taste/system inputs.",
+            "en": "We need controlled refinement or redesign after source, flow, taste, or system inputs exist.",
+        },
+        "do_not_use_when": {
+            "ar": "المطلوب review فقط أو source extraction فقط.",
+            "en": "The task is review-only or source-extraction-only.",
+        },
+        "inputs": [
+            {
+                "ar": "active mode + critique findings + flow corrections + system rules أو source extraction.",
+                "en": "Active mode plus critique findings, flow corrections, system rules, or source extraction.",
+            }
+        ],
+        "outputs": [
+            {
+                "ar": "واجهة أقوى بصريًا ومنتجيًا مع disclosure واضح لما تغير.",
+                "en": "A stronger UI outcome with clear disclosure of what changed.",
+            }
+        ],
+        "protected_elements": ["active mode", "cta roles", "section order when protected", "component family rules"],
+        "failure_modes": [
+            {
+                "ar": "premium شكلي بلا تحسن بنيوي.",
+                "en": "Decorative premium styling with no structural improvement.",
+            },
+            {
+                "ar": "تغيير flow أو source decisions بصمت.",
+                "en": "Silently changing flow or source decisions.",
+            },
+        ],
+        "handoff_to": ["ui_taste_critic", "design_system_enforcer"],
+        "overlap_with": ["frontend-skill"],
+    },
+    {
+        "skill_id": "frontend-skill",
+        "display_name": "Frontend Skill",
+        "layer": {"ar": "Single-pass visual doctrine", "en": "Single-pass visual doctrine"},
+        "primary_job": {
+            "ar": "يدفع التنفيذ إلى composition أقوى، hierarchy أوضح، motion intentional، وواجهة غير generic.",
+            "en": "Pushes execution toward stronger composition, clearer hierarchy, intentional motion, and non-generic UI.",
+        },
+        "first_choice_when": {
+            "ar": "الطلب net-new branded landing أو demo أو surface ذوقي تقوده art direction وليس source/flow/system complexity.",
+            "en": "The request is a net-new branded landing, demo, or taste-led surface where art direction matters more than source/flow/system complexity.",
+        },
+        "do_not_use_when": {
+            "ar": "المشكلة الأساسية Figma parity أو UX flow repair أو design-system drift أو protected elements معقدة.",
+            "en": "The core problem is Figma parity, UX flow repair, design-system drift, or complex protected elements.",
+        },
+        "inputs": [
+            {
+                "ar": "brief بصري، brand presence مطلوب، ومساحة حرية مناسبة في composition.",
+                "en": "A visual brief, a need for strong brand presence, and enough freedom in composition.",
+            }
+        ],
+        "outputs": [
+            {
+                "ar": "واجهة poster-like أقوى مع visual thesis واضح، لكنها لا تنتج governance أو system audit أو flow diagnosis وحدها.",
+                "en": "A stronger poster-like UI with a clear visual thesis, but not governance, system auditing, or flow diagnosis on its own.",
+            }
+        ],
+        "protected_elements": ["visual anchor", "brand-first hierarchy", "sparse copy discipline", "no-cards-by-default bias"],
+        "failure_modes": [
+            {
+                "ar": "استعمالها كبديل للمنظومة كلها، فتتسع فوق critique وsystem وorchestration.",
+                "en": "Using it as a substitute for the whole stack, causing overlap with critique, system work, and orchestration.",
+            },
+            {
+                "ar": "تقديم taste قوي مع product logic أو source safety أضعف من المطلوب.",
+                "en": "Delivering strong taste while under-serving product logic or source safety.",
+            },
+        ],
+        "handoff_to": ["ui_taste_critic", "design_system_enforcer"],
+        "overlap_with": [
+            "omega_ui_product_brain",
+            "ui_taste_critic",
+            "design_system_enforcer",
+            "premium_ui_generator",
+        ],
+    },
+]
+
+UI_HUD_CONTRACT = {
+    "cluster_summary": {
+        "ar": "هذا العنقود ليس stack إلزامي يمر عليه كل طلب. هو خريطة routing: من يبدأ، من يراجع، ومتى تتوقف passes حتى لا يحدث drift.",
+        "en": "This cluster is not a mandatory stack for every request. It is a routing map: who starts, who reviews, and where passes should stop to avoid drift.",
+    },
+    "handoff_order": [
+        {
+            "title": {"ar": "طبقة الحوكمة أولًا عند الحاجة", "en": "Governance first when needed"},
+            "detail": {
+                "ar": "استخدم `god-plan-mode` أو `plan-critic` أو `openai-docs` فقط إذا كانت الخطة أو الوثائق قد تغيّر القرار، وليس كمهارات UI peers.",
+                "en": "Use `god-plan-mode`, `plan-critic`, or `openai-docs` only when planning or documentation can change the decision, not as peer UI skills.",
+            },
+            "skills": ["god-plan-mode", "plan-critic", "openai-docs"],
+        },
+        {
+            "title": {"ar": "ابدأ بـ orchestration عندما تتعدد المحاور", "en": "Start with orchestration when axes multiply"},
+            "detail": {
+                "ar": "إذا كانت المهمة تجمع source أو flow أو taste أو system معًا، ابدأ بـ`omega_ui_product_brain`.",
+                "en": "If the task mixes source, flow, taste, or system concerns, start with `omega_ui_product_brain`.",
+            },
+            "skills": ["omega_ui_product_brain"],
+        },
+        {
+            "title": {"ar": "الـsource يسبق التوليد", "en": "Source before generation"},
+            "detail": {
+                "ar": "عند وجود Figma، يقرأ `figma_mcp_operator` المصدر قبل أي pass توليدي أو taste upgrade.",
+                "en": "When Figma exists, `figma_mcp_operator` reads the source before any generative or taste-upgrade pass.",
+            },
+            "skills": ["figma_mcp_operator", "premium_ui_generator"],
+        },
+        {
+            "title": {"ar": "الـflow يسبق polish إذا كان broken", "en": "Flow before polish when flow is broken"},
+            "detail": {
+                "ar": "إذا كانت المشكلة في CTA logic أو task path أو trust، يبدأ `product_flow_architect` قبل `ui_taste_critic`.",
+                "en": "If the issue is CTA logic, task path, or trust, `product_flow_architect` should lead before `ui_taste_critic`.",
+            },
+            "skills": ["product_flow_architect", "ui_taste_critic"],
+        },
+        {
+            "title": {"ar": "النظام يراجع الناتج قبل الإغلاق", "en": "System review closes the pass"},
+            "detail": {
+                "ar": "بعد التنفيذ أو refinement، يتأكد `design_system_enforcer` أن التحسينات لم تتحول إلى drift.",
+                "en": "After implementation or refinement, `design_system_enforcer` checks that improvements did not become drift.",
+            },
+            "skills": ["design_system_enforcer"],
+        },
+        {
+            "title": {"ar": "الاستثناء السريع: `frontend-skill`", "en": "Fast-path exception: `frontend-skill`"},
+            "detail": {
+                "ar": "يستطيع أن يقود وحده فقط عندما تكون المهمة taste-led وnet-new ولا تحمل source truth أو flow/system constraints ثقيلة.",
+                "en": "It may lead alone only when the task is taste-led, net-new, and free of heavy source-truth or flow/system constraints.",
+            },
+            "skills": ["frontend-skill"],
+        },
+    ],
+    "boundary_note": {
+        "ar": "`frontend-skill` ليس orchestrator، وليس critique framework، وليس design-system enforcer. و`omega_ui_product_brain` ليس منفذ UI بحد ذاته.",
+        "en": "`frontend-skill` is not an orchestrator, critique framework, or design-system enforcer. `omega_ui_product_brain` is not a UI executor by itself.",
+    },
+    "route_examples": [
+        {
+            "scenario_id": "figma_parity",
+            "title": {"ar": "Figma parity", "en": "Figma parity"},
+            "first_skill": "omega_ui_product_brain",
+            "path": [
+                "omega_ui_product_brain",
+                "figma_mcp_operator",
+                "premium_ui_generator",
+                "ui_taste_critic",
+                "design_system_enforcer",
+            ],
+            "note": {
+                "ar": "هنا `frontend-skill` مرجع taste فقط إن لزم، لا قائد للمسار.",
+                "en": "Here `frontend-skill` is only a taste reference if needed, not the route leader.",
+            },
+        },
+        {
+            "scenario_id": "visual_cleanup_only",
+            "title": {"ar": "Visual cleanup only", "en": "Visual cleanup only"},
+            "first_skill": "ui_taste_critic",
+            "path": ["ui_taste_critic", "design_system_enforcer", "premium_ui_generator"],
+            "note": {
+                "ar": "لو اتسع النطاق أو ظهرت non-negotiables، ارفع المهمة إلى `omega_ui_product_brain`.",
+                "en": "If the scope widens or non-negotiables appear, elevate the task to `omega_ui_product_brain`.",
+            },
+        },
+        {
+            "scenario_id": "ux_conversion_issue",
+            "title": {"ar": "UX / conversion issue", "en": "UX / conversion issue"},
+            "first_skill": "product_flow_architect",
+            "path": ["product_flow_architect", "premium_ui_generator", "ui_taste_critic", "design_system_enforcer"],
+            "note": {
+                "ar": "لا تبدأ هنا بـ`frontend-skill` لأن المشكلة الأساسية ليست art direction بل completion logic.",
+                "en": "Do not start with `frontend-skill` here because the issue is completion logic, not art direction.",
+            },
+        },
+        {
+            "scenario_id": "design_system_drift",
+            "title": {"ar": "Design-system drift", "en": "Design-system drift"},
+            "first_skill": "design_system_enforcer",
+            "path": ["design_system_enforcer", "premium_ui_generator", "ui_taste_critic"],
+            "note": {
+                "ar": "النقطة هنا إعادة السلوك إلى قواعد، لا إعادة اختراع الواجهة.",
+                "en": "The goal here is to restore rule-based behavior, not reinvent the interface.",
+            },
+        },
+        {
+            "scenario_id": "net_new_branded_landing",
+            "title": {"ar": "Net-new branded landing", "en": "Net-new branded landing"},
+            "first_skill": "frontend-skill",
+            "path": ["frontend-skill", "ui_taste_critic", "design_system_enforcer"],
+            "note": {
+                "ar": "إذا دخل Figma أو IA ثابتة أو protected elements كثيرة، اجعل `omega_ui_product_brain` فوق المسار.",
+                "en": "If Figma, fixed IA, or many protected elements appear, place `omega_ui_product_brain` above the route.",
+            },
+        },
+        {
+            "scenario_id": "dashboard_task_clarity",
+            "title": {"ar": "Dashboard / task clarity weak", "en": "Dashboard / task clarity weak"},
+            "first_skill": "product_flow_architect",
+            "path": ["product_flow_architect", "premium_ui_generator", "design_system_enforcer"],
+            "note": {
+                "ar": "الهدف هنا ليس hero أجمل، بل أن يفهم operator ما الذي يفعله الآن وما الخطوة التالية.",
+                "en": "The goal here is not a prettier hero, but making the operator understand what to do now and what comes next.",
+            },
+        },
+    ],
+    "authority_note": {
+        "ar": "في التعارض: user instruction ثم constraints ثم source truth ثم product flow ثم design system ثم visual taste.",
+        "en": "In conflicts: user instruction, then constraints, then source truth, then product flow, then design system, then visual taste.",
+    },
+}
 
 
 def run_command(args):
@@ -576,6 +1081,113 @@ def render_candidate(candidate, kind: str):
         {bilingual_text(candidate["instead_ar"] if kind == "retire" else candidate["next_ar"], candidate["instead_en"] if kind == "retire" else candidate["next_en"], "p", "muted")}
       </article>
     """
+
+
+def build_ui_skill_guide_payload():
+    return {
+        "artifact_paths": {
+            "guide_markdown": str(UI_SKILLS_BOUNDARY_GUIDE_MD.relative_to(ROOT)),
+            "contract_json": str(UI_SKILLS_BOUNDARY_CONTRACT_JSON.relative_to(ROOT)),
+        },
+        "summary": {
+            "ar": "مرجع authoritative يثبت حدود منظومة UI skills: من ينسق، من ينفذ، من يقرأ المصدر، ومن يراجع الذوق أو النظام.",
+            "en": "An authoritative guide that locks the boundaries of the UI skill stack: who orchestrates, who executes, who reads source truth, and who reviews taste or system behavior.",
+        },
+        "governance_overlay": UI_GOVERNANCE_OVERLAY,
+        "comparison_contract": UI_COMPARISON_CONTRACT,
+        "hud_contract": UI_HUD_CONTRACT,
+        "sources": UI_GUIDE_OPENAI_DOC_LINKS,
+    }
+
+
+def build_ui_skill_guide_markdown(payload: dict) -> str:
+    lines = [
+        "# UI Skills Boundary Guide",
+        "",
+        "## Summary",
+        f"- {payload['summary']['ar']}",
+        f"- المخرج canonical: `{payload['artifact_paths']['guide_markdown']}`",
+        f"- العقد الخام للآلة: `{payload['artifact_paths']['contract_json']}`",
+        "- طبقة الحوكمة ليست peer داخل عنقود UI، بل overlay يُستدعى فقط عندما يغيّر الخطة أو الوثائق.",
+        "",
+        "## Taxonomy",
+        "- Governance overlay: `god-plan-mode`, `plan-critic`, `openai-docs`",
+        "- Orchestration: `omega_ui_product_brain`",
+        "- Specialists: `figma_mcp_operator`, `product_flow_architect`, `ui_taste_critic`, `design_system_enforcer`, `premium_ui_generator`",
+        "- Single-pass visual doctrine: `frontend-skill`",
+        "",
+        "## Governance Overlay",
+    ]
+
+    for item in payload["governance_overlay"]:
+        lines.extend(
+            [
+                f"### `{item['skill_id']}`",
+                f"- الدور: {item['job']['ar']}",
+                f"- متى يدخل: {item['why']['ar']}",
+                "",
+            ]
+        )
+
+    lines.append("## Comparison Contract")
+    lines.append("")
+    for item in payload["comparison_contract"]:
+        lines.extend(
+            [
+                f"### `{item['skill_id']}`",
+                f"- الطبقة: {item['layer']['ar']}",
+                f"- المهمة الأساسية: {item['primary_job']['ar']}",
+                f"- أول اختيار عندما: {item['first_choice_when']['ar']}",
+                f"- لا تستخدمه عندما: {item['do_not_use_when']['ar']}",
+                f"- المدخلات: {'؛ '.join(value['ar'] for value in item['inputs'])}",
+                f"- المخرجات: {'؛ '.join(value['ar'] for value in item['outputs'])}",
+                f"- ما يجب حمايته: {', '.join(f'`{value}`' for value in item['protected_elements'])}",
+                f"- يفشل إذا: {'؛ '.join(value['ar'] for value in item['failure_modes'])}",
+                f"- handoff_to: {', '.join(f'`{value}`' for value in item['handoff_to'])}",
+                f"- overlap_with: {', '.join(f'`{value}`' for value in item['overlap_with'])}",
+                "",
+            ]
+        )
+
+    lines.extend(
+        [
+            "## HUD Contract",
+            f"- Cluster summary: {payload['hud_contract']['cluster_summary']['ar']}",
+            f"- Boundary note: {payload['hud_contract']['boundary_note']['ar']}",
+            f"- Authority note: {payload['hud_contract']['authority_note']['ar']}",
+            "",
+            "### Handoff Order",
+        ]
+    )
+    for index, step in enumerate(payload["hud_contract"]["handoff_order"], start=1):
+        lines.append(
+            f"{index}. {step['title']['ar']} — {step['detail']['ar']} | skills: {', '.join(f'`{value}`' for value in step['skills'])}"
+        )
+
+    lines.extend(["", "### Route Scenarios"])
+    for route in payload["hud_contract"]["route_examples"]:
+        lines.extend(
+            [
+                f"- `{route['scenario_id']}`: ابدأ بـ`{route['first_skill']}` | المسار الكامل: {', '.join(f'`{value}`' for value in route['path'])}",
+                f"  {route['note']['ar']}",
+            ]
+        )
+
+    lines.extend(["", "## Sources"])
+    for source in payload["sources"]:
+        lines.append(f"- {source['url']}")
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def write_ui_skill_contract_artifacts(payload: dict):
+    OUTPUT_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    UI_SKILLS_BOUNDARY_GUIDE_MD.write_text(build_ui_skill_guide_markdown(payload), encoding="utf-8")
+    UI_SKILLS_BOUNDARY_CONTRACT_JSON.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
 
 
 def build_shell(title_en: str, title_ar: str, page_class: str, body: str) -> str:
@@ -1686,11 +2298,14 @@ def main():
     OUTPUT_HTML_DIR.mkdir(parents=True, exist_ok=True)
     skills = build_skill_index()
     memory_snapshot = build_memory_snapshot()
+    write_ui_skill_contract_artifacts(build_ui_skill_guide_payload())
     (OUTPUT_HTML_DIR / "omega-skills-hud.html").write_text(build_skills_page(skills), encoding="utf-8")
     (OUTPUT_HTML_DIR / "omega-memory-learning-report.html").write_text(build_memory_page(skills, memory_snapshot), encoding="utf-8")
     print("Wrote:")
     print(OUTPUT_HTML_DIR / "omega-skills-hud.html")
     print(OUTPUT_HTML_DIR / "omega-memory-learning-report.html")
+    print(UI_SKILLS_BOUNDARY_GUIDE_MD)
+    print(UI_SKILLS_BOUNDARY_CONTRACT_JSON)
 
 
 if __name__ == "__main__":

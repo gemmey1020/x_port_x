@@ -402,6 +402,7 @@ def main():
         v2.SHARED_CSS = V5_CSS
         skills = base.build_skill_index()
         snapshot = base.build_memory_snapshot()
+        base.write_ui_skill_contract_artifacts(base.build_ui_skill_guide_payload())
         skills_html = restyle_document(v2.build_skills_page(skills), "skills")
         memory_html = restyle_document(v2.build_memory_page(skills, snapshot), "memory")
         SKILLS_OUTPUT.write_text(skills_html, encoding="utf-8")
@@ -412,6 +413,8 @@ def main():
     print("Wrote:")
     print(SKILLS_OUTPUT)
     print(MEMORY_OUTPUT)
+    print(base.UI_SKILLS_BOUNDARY_GUIDE_MD)
+    print(base.UI_SKILLS_BOUNDARY_CONTRACT_JSON)
 
 
 if __name__ == "__main__":

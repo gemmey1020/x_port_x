@@ -1217,6 +1217,73 @@ def render_source_links() -> str:
     )
 
 
+def render_custom_source_links(links: list[dict]) -> str:
+    return "".join(
+        f'<a href="{escape(link["url"])}"><strong>{escape(link["label"])}</strong><span class="path-label">{escape(link["url"])}</span></a>'
+        for link in links
+    )
+
+
+def render_ui_contract_story(item: dict) -> str:
+    return f"""
+      <article class="story-band">
+        <div>
+          <span class="tier-token">{escape(item["layer"]["en"])}</span>
+        </div>
+        <div class="story-band__content">
+          <div class="tag-row">
+            {code_tag(item["skill_id"])}
+            {inline_tag(item["layer"]["ar"], item["layer"]["en"], "accent")}
+          </div>
+          <h3>{escape(item["display_name"])}</h3>
+          {bilingual_text(item["primary_job"]["ar"], item["primary_job"]["en"], "p", "rail-copy")}
+          {bilingual_text("أول اختيار: " + item["first_choice_when"]["ar"], "First choice: " + item["first_choice_when"]["en"], "p", "dim-copy")}
+          {bilingual_text("لا تستخدمه عندما: " + item["do_not_use_when"]["ar"], "Do not use when: " + item["do_not_use_when"]["en"], "p", "dim-copy")}
+          {bilingual_text("ما يجب حمايته: " + ", ".join(item["protected_elements"]), "Protect: " + ", ".join(item["protected_elements"]), "p", "dim-copy")}
+          <div class="token-row story-band__tokens">
+            {"".join(code_tag(skill_id) for skill_id in item["handoff_to"])}
+          </div>
+        </div>
+      </article>
+    """
+
+
+def render_ui_contract_stack(item: dict) -> str:
+    failure_excerpt_ar = item["failure_modes"][0]["ar"]
+    failure_excerpt_en = item["failure_modes"][0]["en"]
+    return f"""
+      <article class="stack-item">
+        <div>
+          <span class="tier-token">{escape(item["layer"]["en"])}</span>
+        </div>
+        <div>
+          <div class="tag-row">
+            {code_tag(item["skill_id"])}
+            {inline_tag(item["layer"]["ar"], item["layer"]["en"], "accent")}
+          </div>
+          <h3>{escape(item["display_name"])}</h3>
+          {bilingual_text(item["primary_job"]["ar"], item["primary_job"]["en"], "p", "rail-copy")}
+          {bilingual_text("ابدأ عندما: " + item["first_choice_when"]["ar"], "Start when: " + item["first_choice_when"]["en"], "p", "dim-copy")}
+          {bilingual_text("فشل شائع: " + failure_excerpt_ar, "Failure mode: " + failure_excerpt_en, "p", "dim-copy")}
+        </div>
+      </article>
+    """
+
+
+def render_ui_route_panel(route: dict) -> str:
+    return f"""
+      <article class="insight-panel">
+        <div class="tag-row">
+          {inline_tag(route["title"]["ar"], route["title"]["en"], "accent")}
+          {code_tag(route["first_skill"])}
+        </div>
+        <h3>{bilingual_html("ابدأ هنا", "Start here", "span")}</h3>
+        {bilingual_text("المسار: " + " → ".join(route["path"]), "Path: " + " -> ".join(route["path"]), "p", "rail-copy")}
+        {bilingual_text(route["note"]["ar"], route["note"]["en"], "p", "dim-copy")}
+      </article>
+    """
+
+
 def build_topbar(page_label_ar: str, page_label_en: str, meta_html: str) -> str:
     return f"""
       <header class="utility-bar">
@@ -1272,6 +1339,10 @@ def build_skills_page(skills: list[dict]) -> str:
     top_level.sort(key=lambda item: (-item["score"], item["skill_id"]))
     best = top_level[0]
     tier_groups = {tier: [skill for skill in top_level if skill["tier"] == tier] for tier in ("S", "A", "B", "C")}
+    ui_payload = base.build_ui_skill_guide_payload()
+    comparison_map = {item["skill_id"]: item for item in ui_payload["comparison_contract"]}
+    governance_overlay = ui_payload["governance_overlay"]
+    hud_contract = ui_payload["hud_contract"]
     generated_at = pretty_timestamp(datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"))
 
     meta_html = "".join(
@@ -1418,6 +1489,65 @@ def build_skills_page(skills: list[dict]) -> str:
       </section>
     """
 
+    ui_boundary_section = f"""
+      <section class="section-block" data-parallax>
+        <div class="section-head">
+          <p class="section-kicker">{bilingual_html("UI cluster contract", "UI cluster contract", "span")}</p>
+          <h2>{bilingual_html("حدود العنقود: من ينسّق، من ينفّذ، ومن يراجع", "Cluster boundaries: who orchestrates, who executes, and who reviews", "span")}</h2>
+          {bilingual_text(hud_contract["cluster_summary"]["ar"], hud_contract["cluster_summary"]["en"], "p", "section-copy")}
+        </div>
+        <div class="section-divider"></div>
+        <div class="split-grid">
+          <article class="insight-panel">
+            <h3>{bilingual_html("Governance overlay / ليست UI peers", "Governance overlay / not UI peers", "span")}</h3>
+            <ul class="report-list">
+              {"".join(bilingual_html(f"<code>{escape(item['skill_id'])}</code> — {item['job']['ar']}", f"<code>{escape(item['skill_id'])}</code> — {item['job']['en']}", "li") for item in governance_overlay)}
+            </ul>
+            {bilingual_text("هذه الطبقة تدخل فقط عندما تكون الخطة أو الوثائق أو proof package قادرة على تغيير القرار.", "This layer only enters when the plan, docs, or proof package can change the decision.", "p", "dim-copy")}
+          </article>
+          <article class="insight-panel">
+            <h3>{bilingual_html("Authority + handoff order", "Authority + handoff order", "span")}</h3>
+            <ul class="report-list">
+              {"".join(bilingual_html(f"<strong>{step['title']['ar']}</strong> — {step['detail']['ar']}", f"<strong>{step['title']['en']}</strong> — {step['detail']['en']}", "li") for step in hud_contract["handoff_order"])}
+            </ul>
+            {bilingual_text(hud_contract["authority_note"]["ar"], hud_contract["authority_note"]["en"], "p", "dim-copy")}
+          </article>
+        </div>
+        <div class="story-stack">
+          {render_ui_contract_story(comparison_map["omega_ui_product_brain"])}
+          {render_ui_contract_story(comparison_map["frontend-skill"])}
+        </div>
+        <div class="stack-list">
+          {"".join(render_ui_contract_stack(comparison_map[skill_id]) for skill_id in ["figma_mcp_operator", "product_flow_architect", "ui_taste_critic", "design_system_enforcer", "premium_ui_generator"])}
+        </div>
+        <div class="split-grid">
+          {"".join(render_ui_route_panel(route) for route in hud_contract["route_examples"])}
+        </div>
+        <div class="split-grid">
+          <article class="insight-panel">
+            <h3>{bilingual_html("Canonical artifacts", "Canonical artifacts", "span")}</h3>
+            <ul class="fact-list">
+              {render_fact_list([
+                  ("guide_markdown", ui_payload["artifact_paths"]["guide_markdown"]),
+                  ("contract_json", ui_payload["artifact_paths"]["contract_json"]),
+              ])}
+            </ul>
+            {bilingual_text("الشرح الطويل يظل canonical في guide markdown، بينما الـHUD يعرض نسخة مكثفة منه فقط.", "The long-form explanation stays canonical in the markdown guide, while the HUD only shows a compressed contract.", "p", "dim-copy")}
+          </article>
+          <article class="insight-panel">
+            <h3>{bilingual_html("Why content is canonical and HUD is render", "Why content is canonical and HUD is render", "span")}</h3>
+            {bilingual_text("مراجعة OpenAI الرسمية هنا استخدمت فقط لتثبيت قاعدة فصل المحتوى المرجعي عن طبقة العرض، لا لتحويل `openai-docs` إلى UI skill داخل العنقود.", "The OpenAI review here was used only to lock the rule that canonical content stays separate from the render layer, not to turn `openai-docs` into a UI skill inside the cluster.", "p", "rail-copy")}
+            <div class="source-list">
+              {render_custom_source_links(ui_payload["sources"])}
+            </div>
+          </article>
+        </div>
+        <div class="tag-row">
+          {inline_tag(hud_contract["boundary_note"]["ar"], hud_contract["boundary_note"]["en"], "accent")}
+        </div>
+      </section>
+    """
+
     retire_section = f"""
       <section class="section-block" data-parallax>
         <div class="section-head">
@@ -1475,7 +1605,7 @@ def build_skills_page(skills: list[dict]) -> str:
       </section>
     """
 
-    body = topbar + hero + system_section + efficiency_section + merge_section + retire_section + improve_section + registry_section
+    body = topbar + hero + system_section + efficiency_section + merge_section + ui_boundary_section + retire_section + improve_section + registry_section
     return build_shell("Omega Skills HUD V2", "لوحة مهارات أوميجا V2", "skills-page", body)
 
 
@@ -1793,11 +1923,14 @@ def main():
     OUTPUT_HTML_DIR.mkdir(parents=True, exist_ok=True)
     skills = base.build_skill_index()
     snapshot = base.build_memory_snapshot()
+    base.write_ui_skill_contract_artifacts(base.build_ui_skill_guide_payload())
     SKILLS_OUTPUT.write_text(build_skills_page(skills), encoding="utf-8")
     MEMORY_OUTPUT.write_text(build_memory_page(skills, snapshot), encoding="utf-8")
     print("Wrote:")
     print(SKILLS_OUTPUT)
     print(MEMORY_OUTPUT)
+    print(base.UI_SKILLS_BOUNDARY_GUIDE_MD)
+    print(base.UI_SKILLS_BOUNDARY_CONTRACT_JSON)
 
 
 if __name__ == "__main__":
