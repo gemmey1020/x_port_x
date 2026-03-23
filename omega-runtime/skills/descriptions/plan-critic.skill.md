@@ -1,6 +1,6 @@
 ---
 skill_id: plan-critic
-display_name: Plan Critic
+display_name: God Plan Critic
 category: planning
 status: active
 source_skill_path: /home/gemmey1020/.codex/skills/plan-critic/SKILL.md
@@ -8,7 +8,7 @@ documentation_scope: description_only
 implementation_included: false
 ---
 
-# Plan Critic
+# God Plan Critic
 
 ## Summary
 Reviews execution plans to identify high-impact weaknesses before work begins.
@@ -39,3 +39,5 @@ Reviews execution plans to identify high-impact weaknesses before work begins.
 
 ## Notes
 - The source skill ranks findings by execution impact.
+- Public/operator name: `God Plan Critic`; invoke now with `$plan-critic`.
+- Internal skill id remains `plan-critic`.

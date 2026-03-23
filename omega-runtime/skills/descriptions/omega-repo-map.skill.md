@@ -1,6 +1,6 @@
 ---
 skill_id: omega-repo-map
-display_name: Omega Repo Map
+display_name: Omega Third Eye
 category: planning
 status: active
 source_skill_path: /home/gemmey1020/.codex/skills/omega-repo-map/SKILL.md
@@ -8,7 +8,7 @@ documentation_scope: description_only
 implementation_included: false
 ---
 
-# Omega Repo Map
+# Omega Third Eye
 
 ## Summary
 Builds a fast, evidence-first map of an unfamiliar repository by identifying stack markers, likely flow paths, entrypoints, and blast radius before editing.
@@ -41,3 +41,5 @@ Builds a fast, evidence-first map of an unfamiliar repository by identifying sta
 
 ## Notes
 - The source skill explicitly prefers tracing one strong path first over producing broad speculative maps.
+- Public/operator name: `Omega Third Eye`; invoke now with `$omega-repo-map`.
+- Internal skill id remains `omega-repo-map`.

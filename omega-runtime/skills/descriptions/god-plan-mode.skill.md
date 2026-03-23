@@ -40,3 +40,4 @@ Builds execution-ready plans for ambiguous, risky, or multi-step coding work.
 
 ## Notes
 - The source skill prefers repository evidence over speculative planning.
+- Public/operator name: `God Plan Mode`; invoke now with `$god-plan-mode`.

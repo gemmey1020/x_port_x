@@ -51,24 +51,24 @@ UI_GUIDE_OPENAI_DOC_LINKS = [
 ]
 
 REFRESHED_SKILLS = [
-    "frontend-skill",
-    "omega-ai-runtime",
-    "omega-format",
-    "omega-proof-gate",
+    "god-plan-mode",
     "omega-repo-map",
+    "plan-critic",
+    "omega-conductor",
+    "omega-proof-gate",
 ]
 REMOVED_EXCEPTIONS = ["arabic-output-guard"]
 SYSTEM_EXCEPTION_IDS = {"skill-creator", "skill-installer"}
 MERGE_GROUPS = [
     {
         "tier": "S",
-        "label_en": "Planning + Proof Stack",
-        "label_ar": "باقة التخطيط والإثبات",
-        "skills": ["god-plan-mode", "omega-repo-map", "plan-critic", "omega-proof-gate"],
-        "why_en": "The four skills form one pipeline already: map the repo, shape the plan, critique the plan, then choose the proof package.",
-        "why_ar": "الأربع مهارات دول شغالين فعليًا كسلسلة واحدة: نفهم الريبو، نبني الخطة، نراجعها، وبعدها نثبتها بأقل proof مقنع.",
-        "action_en": "Best merge target: shared trigger contract or a coordinator wrapper before deeper consolidation.",
-        "action_ar": "أفضل دمج مبدئي: عقد استدعاء موحد أو wrapper منسّق قبل أي دمج أعمق.",
+        "label_en": "Planning + Execution + Proof Stack",
+        "label_ar": "باقة التخطيط والتنفيذ والإثبات",
+        "skills": ["god-plan-mode", "omega-repo-map", "plan-critic", "omega-conductor", "omega-proof-gate"],
+        "why_en": "The five skills now form one operator-visible pipeline: map the repo, shape the plan, critique it, orchestrate execution, then lock proof honestly.",
+        "why_ar": "الخمس مهارات بقوا الآن pipeline واحدة واضحة للمشغّل: نفهم الريبو، نبني الخطة، نضغط عليها، ننسق التنفيذ، ثم نقفل الـproof بصدق.",
+        "action_en": "Do not merge deeper yet; stabilize naming, operator surfaces, and pilot-wave evidence first.",
+        "action_ar": "لا نندمج أعمق الآن؛ الأول نثبت الأسماء والسطوح التشغيلية وأدلة الـpilot wave.",
     },
     {
         "tier": "A",
@@ -799,6 +799,7 @@ COMPONENT_OVERRIDES = {
     "god-plan-mode": {"execution": 5, "clarity": 2, "evidence": 2},
     "omega-repo-map": {"execution": 4, "uniqueness": 1, "clarity": 1},
     "plan-critic": {"execution": 3, "clarity": 2, "evidence": 1},
+    "omega-conductor": {"execution": 4, "uniqueness": 2, "clarity": 1, "evidence": 1},
     "omega-proof-gate": {"execution": 3, "clarity": 1, "evidence": 2},
     "persistent-memory": {"execution": 4, "uniqueness": 3, "clarity": 1, "evidence": 2},
     "openai-docs": {"execution": 3, "uniqueness": 1, "clarity": 1, "evidence": 2},
@@ -945,6 +946,7 @@ def build_skill_index():
         skill = {
             "skill_id": entry["skill_id"],
             "display_name": entry["display_name"],
+            "invoke_now": f"${entry['skill_id']}",
             "category": entry["category"],
             "summary": summary,
             "source_path": entry["source_skill_path"],
@@ -1009,7 +1011,7 @@ def render_skill_card(skill):
       <article class="skill-card">
         <div class="skill-card__top">
           <div>
-            <p class="eyebrow">skill_id</p>
+            <p class="eyebrow">operator name</p>
             <h3>{escape(skill["display_name"])}</h3>
           </div>
           <div class="skill-card__score">
@@ -1018,6 +1020,8 @@ def render_skill_card(skill):
           </div>
         </div>
         <div class="chip-row">
+          {code_chip(skill["skill_id"])}
+          {code_chip(skill["invoke_now"])}
           <span class="chip"><span data-lang="ar">{escape(category_ar)}</span><span data-lang="en">{escape(category_en)}</span></span>
           {advice}
         </div>
@@ -2005,9 +2009,9 @@ def build_skills_page(skills):
           <article class="stat-card">
             <h3>{bilingual_html("ما الذي تغيّر في السجل؟", "What changed in the registry?", "span")}</h3>
             <ul class="report-list">
-              <li>{bilingual_html("تمت إضافة 5 أوصاف ناقصة: frontend-skill, omega-ai-runtime, omega-format, omega-proof-gate, omega-repo-map", "Added 5 missing descriptions: frontend-skill, omega-ai-runtime, omega-format, omega-proof-gate, omega-repo-map", "span")}</li>
-              <li>{bilingual_html("إجمالي السجل الحالي: 39 entry = 37 top-level + 2 system exceptions صالحة", "Current registry total: 39 entries = 37 top-level skills + 2 valid system exceptions", "span")}</li>
-              <li>{bilingual_html("تم حذف الاستثناء القديم arabic-output-guard لأن المصدر الفعلي لم يعد موجودًا", "Removed the stale arabic-output-guard exception because its source no longer exists", "span")}</li>
+              <li>{bilingual_html("تمت مزامنة طبقة التخطيط مع الهوية الجديدة: `Omega Third Eye`, `God Plan Critic`, `Omega Conductor`, `Omega Proof Lock`.", "The planning layer has been aligned to the new identity: `Omega Third Eye`, `God Plan Critic`, `Omega Conductor`, and `Omega Proof Lock`.", "span")}</li>
+              <li>{bilingual_html("أُضيفت entry رسمية لـ`omega-conductor` داخل الكتالوج الحي مع توثيقها الحالي.", "A formal `omega-conductor` entry was added to the live catalog together with its current documentation.", "span")}</li>
+              <li>{bilingual_html("السطوح التشغيلية الحالية تعرض الآن `public name + invoke now` بدل الاكتفاء باسم داخلي أو label قديم.", "Current operator surfaces now show `public name + invoke now` instead of relying on an internal token or an old label alone.", "span")}</li>
             </ul>
           </article>
           <article class="stat-card">

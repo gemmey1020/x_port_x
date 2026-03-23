@@ -11,11 +11,12 @@ implementation_included: false
 # Self Learn
 
 ## Summary
-Provides deterministic self-only skill hardening within the `self-learn` skill directory.
+Provides deterministic self-only skill hardening inside the `self-learn` skill directory, with read-only reporting that can optionally surface project reference context from persistent memory.
 
 ## Use When
 - Use only for bounded improvement work inside the external `self-learn` skill itself.
 - Use when observe, propose, apply, report, or rollback must stay local to that skill.
+- Use when `report` should include read-only `reference_context` for the current workspace via `--workspace-cwd`.
 
 ## Do Not Use When
 - Do not use to mutate other skills.
@@ -30,13 +31,15 @@ Provides deterministic self-only skill hardening within the `self-learn` skill d
 
 ## Outputs And Effects
 - Produces self-scoped observations, proposals, bounded applies, reports, or rollbacks.
+- `report` may include read-only `reference_context` sourced from `persistent-memory`; no cross-skill writes are allowed.
 
 ## Constraints And Non-Goals
 - Self-only, local-only, explicit-only.
 - Not a workspace-wide mutation engine.
+- Must not promote, mutate, or write back to `persistent-memory`; external reference enrichment is `report`-only and gated by `--workspace-cwd`.
 
 ## Important Source Artifacts
 - `/home/gemmey1020/.codex/skills/self-learn/SKILL.md`
 
 ## Notes
-- This description exists for reference only and does not grant cross-skill mutation authority.
+- This description exists for reference only and does not grant cross-skill mutation authority; any `reference_context` exposure remains read-only.

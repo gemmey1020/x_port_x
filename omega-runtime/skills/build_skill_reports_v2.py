@@ -1108,6 +1108,7 @@ def feature_tail(skill: dict) -> str:
 
 
 def render_feature_skill(skill: dict) -> str:
+    invoke_token = skill.get("invoke_now", f"${skill['skill_id']}")
     return f"""
       <article class="feature-row">
         <div class="feature-rank">
@@ -1117,6 +1118,7 @@ def render_feature_skill(skill: dict) -> str:
         <div class="feature-body">
           <div class="tag-row">
             {code_tag(skill["skill_id"])}
+            {code_tag(invoke_token)}
             {category_tag(skill["category"])}
             {advice_tags(skill["skill_id"])}
           </div>
@@ -1131,11 +1133,13 @@ def render_feature_skill(skill: dict) -> str:
 
 
 def render_dense_skill(skill: dict) -> str:
+    invoke_token = skill.get("invoke_now", f"${skill['skill_id']}")
     return f"""
       <article class="dense-row">
         <div class="dense-row__body">
           <div class="tag-row">
             {code_tag(skill["skill_id"])}
+            {code_tag(invoke_token)}
             {category_tag(skill["category"])}
           </div>
           <h3>{escape(skill["display_name"])}</h3>
@@ -1151,10 +1155,12 @@ def render_dense_skill(skill: dict) -> str:
 
 
 def render_exception(skill: dict) -> str:
+    invoke_token = skill.get("invoke_now", f"${skill['skill_id']}")
     return f"""
       <article class="exception-strip">
         <div class="tag-row">
           {inline_tag("استثناء نظامي", "System Exception", "warn")}
+          {code_tag(invoke_token)}
           {category_tag(skill["category"])}
         </div>
         <h3>{escape(skill["display_name"])}</h3>
@@ -1175,7 +1181,7 @@ def render_story_band(group: dict) -> str:
           {bilingual_text(group["why_ar"], group["why_en"], "p", "rail-copy")}
           {bilingual_text(group["action_ar"], group["action_en"], "p", "dim-copy")}
           <div class="token-row story-band__tokens">
-            {"".join(code_tag(skill_id) for skill_id in group["skills"])}
+            {"".join(code_tag(f"${skill_id}") for skill_id in group["skills"])}
           </div>
         </div>
       </article>
