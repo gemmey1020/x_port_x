@@ -9,6 +9,7 @@ import tempfile
 import threading
 import time
 import unittest
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -67,6 +68,20 @@ def write_rollout(path: Path, message: str) -> None:
         path,
         json.dumps({"type": "event_msg", "payload": {"type": "user_message", "message": message}}, ensure_ascii=False) + "\n",
     )
+
+
+def request_json(url: str, *, method: str = "GET", data: dict[str, object] | None = None, headers: dict[str, str] | None = None) -> tuple[int, dict[str, object]]:
+    encoded = None
+    final_headers = dict(headers or {})
+    if data is not None:
+        encoded = json.dumps(data).encode("utf-8")
+        final_headers["Content-Type"] = "application/json"
+    request = urllib.request.Request(url, data=encoded, method=method, headers=final_headers)
+    try:
+        with urllib.request.urlopen(request, timeout=5) as response:
+            return response.status, json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        return exc.code, json.loads(exc.read().decode("utf-8"))
 
 
 class SkillAuditTests(unittest.TestCase):
@@ -222,11 +237,53 @@ class MemoryFixtureTests(unittest.TestCase):
         core.backfill_memory(config)
         skills_export = core.export_surface(config, "skills-review")
         memory_export = core.export_surface(config, "memory")
+        artifacts_export = core.export_surface(config, "artifacts")
+        runtime_export = core.export_surface(config, "runtime")
+        report_export = core.write_implementation_report(config)
 
         self.assertEqual(skills_export.name, "omega-hud-skills-review.html")
         self.assertEqual(memory_export.name, "omega-hud-memory.html")
+        self.assertEqual(artifacts_export.name, "omega-hud-artifacts.html")
+        self.assertEqual(runtime_export.name, "omega-hud-runtime.html")
+        self.assertEqual(report_export.name, core.IMPLEMENTATION_REPORT_NAME)
         self.assertTrue(skills_export.exists())
         self.assertTrue(memory_export.exists())
+        self.assertTrue(artifacts_export.exists())
+        self.assertTrue(runtime_export.exists())
+        self.assertTrue(report_export.exists())
+
+    def test_artifacts_index_detects_companions_and_report(self) -> None:
+        temp_dir, config = self.build_config()
+        self.addCleanup(temp_dir.cleanup)
+
+        write_text(config.output_dir / "omega-hud-memory.html", "<html>memory</html>\n")
+        write_text(config.output_dir / "omega-hud-memory.pdf", "%PDF-1.7\n")
+        write_text(config.output_dir / "omega-hud-memory.qa" / "index.txt", "qa\n")
+        write_text(config.output_dir / "omega-hud-html.html", "<html>legacy</html>\n")
+        core.write_implementation_report(config, proof_ledger={"ran": ["fixture"], "manual": [], "not_run": [], "blocked": []})
+
+        artifacts = core.load_artifacts_index(config.output_dir)
+        summary = artifacts["summary"]
+        memory_artifact = next(item for item in artifacts["items"] if item["artifact_name"] == "omega-hud-memory.html")
+        report_artifact = next(item for item in artifacts["items"] if item["artifact_name"] == core.IMPLEMENTATION_REPORT_NAME)
+
+        self.assertGreaterEqual(summary["total_html"], 3)
+        self.assertGreaterEqual(summary["with_pdf_companion"], 1)
+        self.assertGreaterEqual(summary["with_qa_companion"], 1)
+        self.assertTrue(memory_artifact["has_pdf_companion"])
+        self.assertTrue(memory_artifact["has_qa_companion"])
+        self.assertEqual(memory_artifact["family_id"], "omega-hud")
+        self.assertTrue(report_artifact["is_report"])
+
+    def test_runtime_overview_reflects_default_lock_state(self) -> None:
+        temp_dir, config = self.build_config()
+        self.addCleanup(temp_dir.cleanup)
+
+        overview = core.build_runtime_overview(config, core.default_session_payload(config), [], [])
+
+        self.assertIn("latencies_ms", overview)
+        self.assertFalse(overview["session"]["writes_available"])
+        self.assertEqual(overview["runtime"]["passcode_env"], core.ADMIN_PASSCODE_ENV)
 
 
 class ServerSmokeTests(unittest.TestCase):
@@ -251,6 +308,104 @@ class ServerSmokeTests(unittest.TestCase):
                 url = f"http://127.0.0.1:{httpd.server_address[1]}/api/health"
                 payload = json.loads(urllib.request.urlopen(url, timeout=5).read().decode("utf-8"))
                 self.assertTrue(payload["ok"])
+            finally:
+                httpd.shutdown()
+                httpd.server_close()
+                thread.join(timeout=5)
+
+    def test_session_gate_blocks_mutations_until_unlock(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            codex_home = tmp_path / "codex"
+            skills_root = codex_home / "skills"
+            output_dir = tmp_path / "output"
+            workspace = tmp_path / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            write_text(workspace / "index.html", "<html></html>\n")
+            make_skill(
+                skills_root / "demo" / "SKILL.md",
+                name="demo",
+                description="Demo skill",
+                body="Its public/operator name is `Demo Skill`.\n\nInvoke now with `$demo`.",
+            )
+            write_text(
+                tmp_path / "catalog.yaml",
+                f"""
+catalog_version: "1.0"
+entries:
+  - skill_id: "demo"
+    display_name: "Demo Skill"
+    category: "planning"
+    status: "active"
+    source_skill_path: "{(skills_root / 'demo' / 'SKILL.md').resolve()}"
+                """,
+            )
+
+            config = core.CockpitConfig(
+                workspace_root=workspace,
+                codex_home=codex_home,
+                catalog_path=tmp_path / "catalog.yaml",
+                output_dir=output_dir,
+                host="127.0.0.1",
+                port=0,
+                admin_passcode="launch-123",
+            ).normalized()
+
+            httpd = server.build_server(config)
+            thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+            thread.start()
+            try:
+                base_url = f"http://127.0.0.1:{httpd.server_address[1]}"
+                nonce = config.session_nonce or ""
+
+                status, session_payload = request_json(f"{base_url}/api/session/state")
+                self.assertEqual(status, 200)
+                self.assertFalse(session_payload["data"]["writes_available"])
+
+                status, locked_export = request_json(
+                    f"{base_url}/api/export/skills-review",
+                    method="POST",
+                    data={},
+                    headers={"X-Omega-Session-Nonce": nonce},
+                )
+                self.assertEqual(status, 403)
+                self.assertFalse(locked_export["ok"])
+
+                status, wrong_unlock = request_json(
+                    f"{base_url}/api/session/unlock",
+                    method="POST",
+                    data={"passcode": "wrong"},
+                    headers={"X-Omega-Session-Nonce": nonce},
+                )
+                self.assertEqual(status, 403)
+                self.assertFalse(wrong_unlock["ok"])
+
+                status, unlocked = request_json(
+                    f"{base_url}/api/session/unlock",
+                    method="POST",
+                    data={"passcode": "launch-123"},
+                    headers={"X-Omega-Session-Nonce": nonce},
+                )
+                self.assertEqual(status, 200)
+                self.assertTrue(unlocked["data"]["session"]["writes_available"])
+
+                status, exported = request_json(
+                    f"{base_url}/api/export/skills-review",
+                    method="POST",
+                    data={},
+                    headers={"X-Omega-Session-Nonce": nonce},
+                )
+                self.assertEqual(status, 200)
+                self.assertTrue((output_dir / "omega-hud-skills-review.html").exists())
+
+                status, locked = request_json(
+                    f"{base_url}/api/session/lock",
+                    method="POST",
+                    data={},
+                    headers={"X-Omega-Session-Nonce": nonce},
+                )
+                self.assertEqual(status, 200)
+                self.assertFalse(locked["data"]["session"]["writes_available"])
             finally:
                 httpd.shutdown()
                 httpd.server_close()

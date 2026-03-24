@@ -1,0 +1,407 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - strong [ref=e5]: OMEGA COCKPIT ADMIN V2
+      - generic [ref=e7]: Omega Admin Deck
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - strong [ref=e10]: loopback
+        - generic [ref=e11]: محلي
+      - generic [ref=e12]:
+        - strong [ref=e13]: x_port_x
+        - generic [ref=e14]: workspace
+      - generic [ref=e15]:
+        - strong [ref=e16]: live truth
+        - generic [ref=e17]: المصدر الحي
+      - generic [ref=e18]:
+        - strong [ref=e19]: mutations-only
+        - generic [ref=e20]: gated writes
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e1419]: الجلسة مفتوحة
+        - button "اقفل الجلسة" [ref=e1420] [cursor=pointer]
+      - generic [ref=e26]: AR / RTL
+      - button "تبديل اللغة" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: تبديل اللغة
+      - generic [ref=e29]: داكن
+      - button "تبديل الثيم" [ref=e30] [cursor=pointer]:
+        - generic [ref=e31]: تبديل الثيم
+  - generic [ref=e32]:
+    - complementary [ref=e33]:
+      - article [ref=e34]:
+        - paragraph [ref=e35]:
+          - generic [ref=e36]: Navigation
+        - heading "سطوح التحكم" [level=3] [ref=e37]:
+          - generic [ref=e38]: سطوح التحكم
+        - navigation [ref=e39]:
+          - link "مراجعة المهارات" [ref=e40] [cursor=pointer]:
+            - /url: "#/skills"
+            - generic [ref=e41]: مراجعة المهارات
+          - link "الميموري" [active] [ref=e42] [cursor=pointer]:
+            - /url: "#/memory"
+            - generic [ref=e43]: الميموري
+          - link "الـ Artifacts" [ref=e44] [cursor=pointer]:
+            - /url: "#/artifacts"
+            - generic [ref=e45]: الـ Artifacts
+          - link "الـ Runtime" [ref=e46] [cursor=pointer]:
+            - /url: "#/runtime"
+            - generic [ref=e47]: الـ Runtime
+      - article [ref=e48]:
+        - paragraph [ref=e1421]: Access state
+        - heading "قفل التنفيذ" [level=3] [ref=e1422]
+        - list [ref=e1423]:
+          - listitem [ref=e1424]:
+            - generic [ref=e1425]: mode
+            - generic [ref=e1426]: mutations-only
+          - listitem [ref=e1427]:
+            - generic [ref=e1428]: passcode_configured
+            - generic [ref=e1429]: "true"
+          - listitem [ref=e1430]:
+            - generic [ref=e1431]: writes_available
+            - generic [ref=e1432]: "true"
+          - listitem [ref=e1433]:
+            - generic [ref=e1434]: lock_reason
+            - generic [ref=e1435]: unlocked
+          - listitem [ref=e1436]:
+            - generic [ref=e1437]: unlock_count
+            - generic [ref=e1438]: "1"
+        - paragraph [ref=e1439]: القراءة مفتوحة محليًا، والكتابة فقط هي التي تحتاج unlock.
+      - article [ref=e68]:
+        - paragraph [ref=e1440]: Deck telemetry
+        - heading "ملخص الميموري" [level=3] [ref=e1441]
+        - list [ref=e1442]:
+          - listitem [ref=e1443]:
+            - generic [ref=e1444]: pending_total
+            - generic [ref=e1445]: "0"
+          - listitem [ref=e1446]:
+            - generic [ref=e1447]: older_than_72h
+            - generic [ref=e1448]: "0"
+          - listitem [ref=e1449]:
+            - generic [ref=e1450]: doctor_issues
+            - generic [ref=e1451]: "0"
+          - listitem [ref=e1452]:
+            - generic [ref=e1453]: resolved_project
+            - generic [ref=e1454]: x-port-x--c275d6fe
+    - main [ref=e77]:
+      - generic [ref=e1455]:
+        - generic [ref=e1456]:
+          - generic [ref=e1457]:
+            - paragraph [ref=e1458]: Memory Control
+            - heading "سطح التنفيذ الوحيدة داخل الكوكبيت" [level=2] [ref=e1459]
+            - paragraph [ref=e1460]: القراءة متاحة دائمًا محليًا، لكن الأفعال التي تغيّر الحالة تحتاج unlock مؤقتة.
+          - generic [ref=e1461]:
+            - button "تحديث" [ref=e1462] [cursor=pointer]
+            - button "تصدير HTML" [ref=e1463] [cursor=pointer]
+            - button "Backfill" [ref=e1464] [cursor=pointer]
+        - generic [ref=e1465]:
+          - article [ref=e1466]:
+            - generic [ref=e1467]: "0"
+            - generic [ref=e1468]: doctor issues
+          - article [ref=e1469]:
+            - generic [ref=e1470]: "0"
+            - generic [ref=e1471]: pending
+          - article [ref=e1472]:
+            - generic [ref=e1473]: "0"
+            - generic [ref=e1474]: promotable
+          - article [ref=e1475]:
+            - generic [ref=e1476]: "0"
+            - generic [ref=e1477]: older than 72h
+        - generic [ref=e1478]:
+          - article [ref=e1479]:
+            - heading "Doctor + analytics" [level=3] [ref=e1480]
+            - list [ref=e1481]:
+              - listitem [ref=e1482]:
+                - generic [ref=e1483]: memory_root
+                - generic [ref=e1484]: /home/gemmey1020/.codex/memory
+              - listitem [ref=e1485]:
+                - generic [ref=e1486]: state_db
+                - generic [ref=e1487]: /home/gemmey1020/.codex/memory/state/memory_state.sqlite
+              - listitem [ref=e1488]:
+                - generic [ref=e1489]: resolved_project
+                - generic [ref=e1490]: x-port-x--c275d6fe
+              - listitem [ref=e1491]:
+                - generic [ref=e1492]: pending_total
+                - generic [ref=e1493]: "0"
+          - article [ref=e1494]:
+            - heading "Token cost" [level=3] [ref=e1495]
+            - list [ref=e1496]:
+              - listitem [ref=e1497]:
+                - code [ref=e1498]: doctor_json
+                - text: — 47..63 tokens
+              - listitem [ref=e1499]:
+                - code [ref=e1500]: inspect_json_no_pending
+                - text: — 409..545 tokens
+              - listitem [ref=e1501]:
+                - code [ref=e1502]: triage_json
+                - text: — 57..76 tokens
+              - listitem [ref=e1503]:
+                - code [ref=e1504]: suggest_json
+                - text: — 1..1 tokens
+        - article [ref=e1505]:
+          - heading "Promotable candidates" [level=3] [ref=e1506]
+          - generic [ref=e1508]: لا توجد عناصر promotable حاليًا.
+        - article [ref=e1509]:
+          - heading "Suggest sample" [level=3] [ref=e1510]
+        - article [ref=e1511]:
+          - heading "Smart cleanup queues" [level=3] [ref=e1512]
+          - generic [ref=e1513]:
+            - article [ref=e1514]:
+              - generic [ref=e1515]:
+                - generic [ref=e1516]:
+                  - generic [ref=e1517]: ephemeral artifacts
+                  - generic [ref=e1518]: "عناصر `project.active_artifact` منخفضة القيمة ويمكن تنظيفها بالجملة."
+                - generic [ref=e1519]:
+                  - generic [ref=e1520]: ephemeral-artifacts
+                  - generic [ref=e1522]: "0"
+                  - generic [ref=e1524]: "0"
+              - list [ref=e1525]:
+                - listitem [ref=e1526]:
+                  - generic [ref=e1527]: recommended_action
+                  - generic [ref=e1528]: reject
+                - listitem [ref=e1529]:
+                  - generic [ref=e1530]: total
+                  - generic [ref=e1531]: "0"
+                - listitem [ref=e1532]:
+                  - generic [ref=e1533]: actionable_total
+                  - generic [ref=e1534]: "0"
+              - button "تحديث الـ preview" [ref=e1536] [cursor=pointer]
+            - article [ref=e1537]:
+              - generic [ref=e1538]:
+                - generic [ref=e1539]:
+                  - generic [ref=e1540]: stale pending > 72h
+                  - generic [ref=e1541]: العناصر القديمة تحتاج إما رفضًا سريعًا أو مراجعة يدوية إذا كانت durable.
+                - generic [ref=e1542]:
+                  - generic [ref=e1543]: stale-pending
+                  - generic [ref=e1545]: "0"
+                  - generic [ref=e1547]: "0"
+              - list [ref=e1548]:
+                - listitem [ref=e1549]:
+                  - generic [ref=e1550]: recommended_action
+                  - generic [ref=e1551]: mixed
+                - listitem [ref=e1552]:
+                  - generic [ref=e1553]: total
+                  - generic [ref=e1554]: "0"
+                - listitem [ref=e1555]:
+                  - generic [ref=e1556]: actionable_total
+                  - generic [ref=e1557]: "0"
+              - button "تحديث الـ preview" [ref=e1559] [cursor=pointer]
+            - article [ref=e1560]:
+              - generic [ref=e1561]:
+                - generic [ref=e1562]:
+                  - generic [ref=e1563]: review attention
+                  - generic [ref=e1564]: العناصر التي تستحق مراجعة بشرية لأنها promotable أو تمس domain/reference state.
+                - generic [ref=e1565]:
+                  - generic [ref=e1566]: review-attention
+                  - generic [ref=e1568]: "0"
+                  - generic [ref=e1570]: "0"
+              - list [ref=e1571]:
+                - listitem [ref=e1572]:
+                  - generic [ref=e1573]: recommended_action
+                  - generic [ref=e1574]: review
+                - listitem [ref=e1575]:
+                  - generic [ref=e1576]: total
+                  - generic [ref=e1577]: "0"
+                - listitem [ref=e1578]:
+                  - generic [ref=e1579]: actionable_total
+                  - generic [ref=e1580]: "0"
+              - button "تحديث الـ preview" [ref=e1582] [cursor=pointer]
+        - generic [ref=e1583]:
+          - article [ref=e1584]:
+            - heading "Mutation history" [level=3] [ref=e1585]
+            - generic [ref=e1586]:
+              - article [ref=e1587]:
+                - generic [ref=e1588]:
+                  - generic [ref=e1589]:
+                    - generic [ref=e1590]: rejected
+                    - generic [ref=e1591]: mem-evt-bee71beb76e8
+                  - generic [ref=e1594]: 2026-03-23 06:29:11 UTC
+                - button "Rollback" [ref=e1596] [cursor=pointer]
+              - article [ref=e1597]:
+                - generic [ref=e1598]:
+                  - generic [ref=e1599]:
+                    - generic [ref=e1600]: rejected
+                    - generic [ref=e1601]: mem-evt-cb248aa901db
+                  - generic [ref=e1604]: 2026-03-23 06:29:10 UTC
+                - button "Rollback" [ref=e1606] [cursor=pointer]
+              - article [ref=e1607]:
+                - generic [ref=e1608]:
+                  - generic [ref=e1609]:
+                    - generic [ref=e1610]: rejected
+                    - generic [ref=e1611]: mem-evt-a9b2dfd219d1
+                  - generic [ref=e1614]: 2026-03-23 06:29:09 UTC
+                - button "Rollback" [ref=e1616] [cursor=pointer]
+              - article [ref=e1617]:
+                - generic [ref=e1618]:
+                  - generic [ref=e1619]:
+                    - generic [ref=e1620]: rejected
+                    - generic [ref=e1621]: mem-evt-341970069249
+                  - generic [ref=e1624]: 2026-03-23 06:29:09 UTC
+                - button "Rollback" [ref=e1626] [cursor=pointer]
+              - article [ref=e1627]:
+                - generic [ref=e1628]:
+                  - generic [ref=e1629]:
+                    - generic [ref=e1630]: rejected
+                    - generic [ref=e1631]: mem-evt-0e6a2f63d86a
+                  - generic [ref=e1634]: 2026-03-23 06:29:08 UTC
+                - button "Rollback" [ref=e1636] [cursor=pointer]
+              - article [ref=e1637]:
+                - generic [ref=e1638]:
+                  - generic [ref=e1639]:
+                    - generic [ref=e1640]: rejected
+                    - generic [ref=e1641]: mem-evt-40e589f856c6
+                  - generic [ref=e1644]: 2026-03-23 06:29:07 UTC
+                - button "Rollback" [ref=e1646] [cursor=pointer]
+              - article [ref=e1647]:
+                - generic [ref=e1648]:
+                  - generic [ref=e1649]:
+                    - generic [ref=e1650]: rejected
+                    - generic [ref=e1651]: mem-evt-05624cb700d0
+                  - generic [ref=e1654]: 2026-03-23 06:29:06 UTC
+                - button "Rollback" [ref=e1656] [cursor=pointer]
+              - article [ref=e1657]:
+                - generic [ref=e1658]:
+                  - generic [ref=e1659]:
+                    - generic [ref=e1660]: rejected
+                    - generic [ref=e1661]: mem-evt-96c90d98ad0c
+                  - generic [ref=e1664]: 2026-03-23 06:29:05 UTC
+                - button "Rollback" [ref=e1666] [cursor=pointer]
+              - article [ref=e1667]:
+                - generic [ref=e1668]:
+                  - generic [ref=e1669]:
+                    - generic [ref=e1670]: rejected
+                    - generic [ref=e1671]: mem-evt-a6751dc1b770
+                  - generic [ref=e1674]: 2026-03-23 06:29:04 UTC
+                - button "Rollback" [ref=e1676] [cursor=pointer]
+              - article [ref=e1677]:
+                - generic [ref=e1678]:
+                  - generic [ref=e1679]:
+                    - generic [ref=e1680]: rejected
+                    - generic [ref=e1681]: mem-evt-865c5c74d417
+                  - generic [ref=e1684]: 2026-03-23 06:29:03 UTC
+                - button "Rollback" [ref=e1686] [cursor=pointer]
+              - article [ref=e1687]:
+                - generic [ref=e1688]:
+                  - generic [ref=e1689]:
+                    - generic [ref=e1690]: rejected
+                    - generic [ref=e1691]: mem-evt-6e4747ceb2ce
+                  - generic [ref=e1694]: 2026-03-23 06:29:02 UTC
+                - button "Rollback" [ref=e1696] [cursor=pointer]
+              - article [ref=e1697]:
+                - generic [ref=e1698]:
+                  - generic [ref=e1699]:
+                    - generic [ref=e1700]: rejected
+                    - generic [ref=e1701]: mem-evt-ed72fbe75d83
+                  - generic [ref=e1704]: 2026-03-23 06:29:00 UTC
+                - button "Rollback" [ref=e1706] [cursor=pointer]
+              - article [ref=e1707]:
+                - generic [ref=e1708]:
+                  - generic [ref=e1709]:
+                    - generic [ref=e1710]: rejected
+                    - generic [ref=e1711]: mem-evt-fcc1acc658c4
+                  - generic [ref=e1714]: 2026-03-23 06:28:59 UTC
+                - button "Rollback" [ref=e1716] [cursor=pointer]
+              - article [ref=e1717]:
+                - generic [ref=e1718]:
+                  - generic [ref=e1719]:
+                    - generic [ref=e1720]: rejected
+                    - generic [ref=e1721]: mem-evt-7496d32218f6
+                  - generic [ref=e1724]: 2026-03-23 06:28:58 UTC
+                - button "Rollback" [ref=e1726] [cursor=pointer]
+              - article [ref=e1727]:
+                - generic [ref=e1728]:
+                  - generic [ref=e1729]:
+                    - generic [ref=e1730]: rejected
+                    - generic [ref=e1731]: mem-evt-eb5c30b6cf55
+                  - generic [ref=e1734]: 2026-03-23 06:28:57 UTC
+                - button "Rollback" [ref=e1736] [cursor=pointer]
+              - article [ref=e1737]:
+                - generic [ref=e1738]:
+                  - generic [ref=e1739]:
+                    - generic [ref=e1740]: rejected
+                    - generic [ref=e1741]: mem-evt-e58003c73734
+                  - generic [ref=e1744]: 2026-03-23 06:28:56 UTC
+                - button "Rollback" [ref=e1746] [cursor=pointer]
+              - article [ref=e1747]:
+                - generic [ref=e1748]:
+                  - generic [ref=e1749]:
+                    - generic [ref=e1750]: rejected
+                    - generic [ref=e1751]: mem-evt-05bd308e9dbc
+                  - generic [ref=e1754]: 2026-03-23 06:28:56 UTC
+                - button "Rollback" [ref=e1756] [cursor=pointer]
+              - article [ref=e1757]:
+                - generic [ref=e1758]:
+                  - generic [ref=e1759]:
+                    - generic [ref=e1760]: rejected
+                    - generic [ref=e1761]: mem-evt-162fc348e16d
+                  - generic [ref=e1764]: 2026-03-23 06:28:55 UTC
+                - button "Rollback" [ref=e1766] [cursor=pointer]
+              - article [ref=e1767]:
+                - generic [ref=e1768]:
+                  - generic [ref=e1769]:
+                    - generic [ref=e1770]: rejected
+                    - generic [ref=e1771]: mem-evt-82d9335144dc
+                  - generic [ref=e1774]: 2026-03-23 06:28:54 UTC
+                - button "Rollback" [ref=e1776] [cursor=pointer]
+              - article [ref=e1777]:
+                - generic [ref=e1778]:
+                  - generic [ref=e1779]:
+                    - generic [ref=e1780]: rejected
+                    - generic [ref=e1781]: mem-evt-caacfd2f7d45
+                  - generic [ref=e1784]: 2026-03-23 06:28:53 UTC
+                - button "Rollback" [ref=e1786] [cursor=pointer]
+              - article [ref=e1787]:
+                - generic [ref=e1788]:
+                  - generic [ref=e1789]:
+                    - generic [ref=e1790]: rejected
+                    - generic [ref=e1791]: mem-evt-81608e69295c
+                  - generic [ref=e1794]: 2026-03-23 06:28:52 UTC
+                - button "Rollback" [ref=e1796] [cursor=pointer]
+              - article [ref=e1797]:
+                - generic [ref=e1798]:
+                  - generic [ref=e1799]:
+                    - generic [ref=e1800]: rejected
+                    - generic [ref=e1801]: mem-evt-88522402a8e2
+                  - generic [ref=e1804]: 2026-03-23 06:28:51 UTC
+                - button "Rollback" [ref=e1806] [cursor=pointer]
+              - article [ref=e1807]:
+                - generic [ref=e1808]:
+                  - generic [ref=e1809]:
+                    - generic [ref=e1810]: rejected
+                    - generic [ref=e1811]: mem-evt-0c0a0d41e2be
+                  - generic [ref=e1814]: 2026-03-23 06:28:51 UTC
+                - button "Rollback" [ref=e1816] [cursor=pointer]
+              - article [ref=e1817]:
+                - generic [ref=e1818]:
+                  - generic [ref=e1819]:
+                    - generic [ref=e1820]: rejected
+                    - generic [ref=e1821]: mem-evt-c86f6687e429
+                  - generic [ref=e1824]: 2026-03-23 06:28:50 UTC
+                - button "Rollback" [ref=e1826] [cursor=pointer]
+          - article [ref=e1827]:
+            - heading "Inspect snapshot" [level=3] [ref=e1828]
+            - generic [ref=e1829]: "{ \"user_profile\": { \"assistant_role_preference\": { \"primary\": \"senior-architect-partner\" }, \"communication_preferences\": { \"language\": \"arabic-egyptian-mixed\", \"tone\": \"direct-collaborative-casual\" }, \"durable_facts\": { \"memory_policy\": { \"learning_gate\": \"suggest-then-promote\", \"recall_strategy\": \"deterministic-first\", \"scope\": \"global-project\" } }, \"guardrails\": [], \"identity\": {}, \"schema_version\": 1, \"tool_preferences\": {}, \"updated_at\": \"2026-03-17T14:24:40+00:00\", \"workflow_preferences\": { \"plan_mode\": \"explicit-plan-for-multi-step\", \"review_mode\": \"findings-first-review\" } }, \"project_profile\": { \"active_goals\": [], \"aliases\": [ \"x_port_x\" ], \"do_not_generalize\": [], \"domain\": \"structured-output-pipeline\", \"local_conventions\": [], \"open_threads\": [ \"مساء الفل يا صديقي\", \"كوديكس انا محتاج مساعدتك\", \"front-end skills ---- عاوز شرح تفصيلي لمهارة $omega_ui_product_brain والمهارات اللي بتشتغل معاها والفرق بين...\", \"عاوزك تعمل ابديت لنفسك وللمهارات في السجل اللي عاملنه هنا : /opt/lampp/htdocs/2nd_epoche/new_yg_system/x_po...\", \"ايه رئيك يا كوديكس لو عملنا upgrade للمهارة القوية $god-plan-mode --وزك ت متستخدمش المهارة انا عاوزك تحطها ...\" ], \"project_id\": \"x-port-x--c275d6fe\", \"root_path\": \"/opt/lampp/htdocs/2nd_epoche/new_yg_system/x_port_x\", \"schema_version\": 1, \"updated_at\": \"2026-03-22T18:10:48+00:00\" } }"
+        - generic [ref=e1830]:
+          - article [ref=e1831]:
+            - heading "Forget key" [level=3] [ref=e1832]
+            - generic [ref=e1833]:
+              - generic [ref=e1834]:
+                - generic [ref=e1835]: النطاق
+                - combobox [ref=e1836]:
+                  - option "global" [selected]
+                  - option "project"
+              - generic [ref=e1837]:
+                - generic [ref=e1838]: المفتاح
+                - textbox "communication.language" [ref=e1839]
+              - generic [ref=e1840]:
+                - generic [ref=e1841]: القيمة الاختيارية
+                - textbox "arabic-egyptian-mixed" [ref=e1842]
+              - button "نفّذ forget" [ref=e1844] [cursor=pointer]
+          - article [ref=e1845]:
+            - heading "Manual rollback" [level=3] [ref=e1846]
+            - generic [ref=e1847]:
+              - generic [ref=e1848]:
+                - generic [ref=e1849]: event id
+                - textbox "mem-evt-..." [ref=e1850]
+              - button "نفّذ rollback" [ref=e1852] [cursor=pointer]
+  - complementary
+  - generic [ref=e79]: "OMEGA COCKPIT ADMIN V2 / local control plane / local-only truth / omega-hud-{filename}.html"

@@ -1,0 +1,676 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - strong [ref=e5]: OMEGA COCKPIT ADMIN V2
+      - generic [ref=e7]: Omega Admin Deck
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - strong [ref=e10]: loopback
+        - generic [ref=e11]: محلي
+      - generic [ref=e12]:
+        - strong [ref=e13]: x_port_x
+        - generic [ref=e14]: workspace
+      - generic [ref=e15]:
+        - strong [ref=e16]: live truth
+        - generic [ref=e17]: المصدر الحي
+      - generic [ref=e18]:
+        - strong [ref=e19]: mutations-only
+        - generic [ref=e20]: gated writes
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e81]: الجلسة مقفولة
+        - button "افتح الجلسة" [ref=e82] [cursor=pointer]
+      - generic [ref=e26]: AR / RTL
+      - button "تبديل اللغة" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: تبديل اللغة
+      - generic [ref=e29]: داكن
+      - button "تبديل الثيم" [ref=e30] [cursor=pointer]:
+        - generic [ref=e31]: تبديل الثيم
+  - generic [ref=e32]:
+    - complementary [ref=e33]:
+      - article [ref=e34]:
+        - paragraph [ref=e35]:
+          - generic [ref=e36]: Navigation
+        - heading "سطوح التحكم" [level=3] [ref=e37]:
+          - generic [ref=e38]: سطوح التحكم
+        - navigation [ref=e39]:
+          - link "مراجعة المهارات" [ref=e40] [cursor=pointer]:
+            - /url: "#/skills"
+            - generic [ref=e41]: مراجعة المهارات
+          - link "الميموري" [ref=e42] [cursor=pointer]:
+            - /url: "#/memory"
+            - generic [ref=e43]: الميموري
+          - link "الـ Artifacts" [ref=e44] [cursor=pointer]:
+            - /url: "#/artifacts"
+            - generic [ref=e45]: الـ Artifacts
+          - link "الـ Runtime" [ref=e46] [cursor=pointer]:
+            - /url: "#/runtime"
+            - generic [ref=e47]: الـ Runtime
+      - article [ref=e48]:
+        - paragraph [ref=e83]: Access state
+        - heading "قفل التنفيذ" [level=3] [ref=e84]
+        - list [ref=e85]:
+          - listitem [ref=e86]:
+            - generic [ref=e87]: mode
+            - generic [ref=e88]: mutations-only
+          - listitem [ref=e89]:
+            - generic [ref=e90]: passcode_configured
+            - generic [ref=e91]: "true"
+          - listitem [ref=e92]:
+            - generic [ref=e93]: writes_available
+            - generic [ref=e94]: "false"
+          - listitem [ref=e95]:
+            - generic [ref=e96]: lock_reason
+            - generic [ref=e97]: locked
+          - listitem [ref=e98]:
+            - generic [ref=e99]: unlock_count
+            - generic [ref=e100]: "0"
+        - paragraph [ref=e101]: القراءة مفتوحة محليًا، والكتابة فقط هي التي تحتاج unlock.
+      - article [ref=e68]:
+        - paragraph [ref=e102]: Deck telemetry
+        - heading "ملخص المهارات" [level=3] [ref=e103]
+        - list [ref=e104]:
+          - listitem [ref=e105]:
+            - generic [ref=e106]: live_total
+            - generic [ref=e107]: "41"
+          - listitem [ref=e108]:
+            - generic [ref=e109]: missing_from_catalog
+            - generic [ref=e110]: "1"
+          - listitem [ref=e111]:
+            - generic [ref=e112]: metadata_drift
+            - generic [ref=e113]: "39"
+          - listitem [ref=e114]:
+            - generic [ref=e115]: stale_docs
+            - generic [ref=e116]: "6"
+    - main [ref=e77]:
+      - generic [ref=e117]:
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - paragraph [ref=e120]: Skill Review
+            - heading "مراجعة حية للمصدر الفعلي للمهارات" [level=2] [ref=e121]
+            - paragraph [ref=e122]: هذه الصفحة readonly بالكامل، والحقيقة فيها تأتي من ~/.codex/skills لا من الأرشيف.
+          - generic [ref=e123]:
+            - button "تحديث" [ref=e124] [cursor=pointer]
+            - button "تصدير HTML" [ref=e125] [cursor=pointer]
+        - generic [ref=e126]:
+          - article [ref=e127]:
+            - generic [ref=e128]: "41"
+            - generic [ref=e129]: إجمالي live
+          - article [ref=e130]:
+            - generic [ref=e131]: "1"
+            - generic [ref=e132]: خارج الكتالوج
+          - article [ref=e133]:
+            - generic [ref=e134]: "39"
+            - generic [ref=e135]: metadata drift
+          - article [ref=e136]:
+            - generic [ref=e137]: "6"
+            - generic [ref=e138]: docs stale
+        - generic [ref=e139]:
+          - article [ref=e140]:
+            - heading "Open findings" [level=3] [ref=e141]
+            - list [ref=e142]:
+              - listitem [ref=e143]:
+                - generic [ref=e144]: openai-docs@system
+                - generic [ref=e145]: /home/gemmey1020/.codex/skills/.system/openai-docs/SKILL.md
+          - article [ref=e146]:
+            - heading "Stale docs" [level=3] [ref=e147]
+            - list [ref=e148]:
+              - listitem [ref=e149]:
+                - generic [ref=e150]: skill-creator@system
+                - text: /opt/lampp/htdocs/2nd_epoche/new_yg_system/x_port_x/omega-runtime/skills/descriptions/skill-creator.skill.md
+              - listitem [ref=e151]:
+                - generic [ref=e152]: skill-installer@system
+                - text: /opt/lampp/htdocs/2nd_epoche/new_yg_system/x_port_x/omega-runtime/skills/descriptions/skill-installer.skill.md
+              - listitem [ref=e153]:
+                - generic [ref=e154]: omega-conductor
+                - text: /opt/lampp/htdocs/2nd_epoche/new_yg_system/x_port_x/omega-runtime/skills/descriptions/omega-conductor.skill.md
+              - listitem [ref=e155]:
+                - generic [ref=e156]: omega-proof-gate
+                - text: /opt/lampp/htdocs/2nd_epoche/new_yg_system/x_port_x/omega-runtime/skills/descriptions/omega-proof-gate.skill.md
+              - listitem [ref=e157]:
+                - generic [ref=e158]: omega-repo-map
+                - text: /opt/lampp/htdocs/2nd_epoche/new_yg_system/x_port_x/omega-runtime/skills/descriptions/omega-repo-map.skill.md
+              - listitem [ref=e159]:
+                - generic [ref=e160]: pdf
+                - text: /opt/lampp/htdocs/2nd_epoche/new_yg_system/x_port_x/omega-runtime/skills/descriptions/pdf.skill.md
+        - article [ref=e161]:
+          - heading "Top-level skills" [level=3] [ref=e162]
+          - generic [ref=e163]:
+            - article [ref=e164]:
+              - generic [ref=e165]:
+                - generic [ref=e166]:
+                  - generic [ref=e167]: design_system_enforcer
+                  - generic [ref=e168]: /home/gemmey1020/.codex/skills/design_system_enforcer/SKILL.md
+                - generic [ref=e169]:
+                  - generic [ref=e170]: design_system_enforcer
+                  - generic [ref=e171]: $design_system_enforcer
+                  - generic [ref=e173]: top-level
+              - paragraph [ref=e174]: Enforce design-system discipline across tokens, components, spacing, emphasis, states, and responsive behavior. Use when the user wants UI consistency, token alignment, component cleanup, systemized polish, or prevention of visual drift.
+              - generic [ref=e175]:
+                - button "تفاصيل" [ref=e176] [cursor=pointer]
+                - button "انسخ invoke" [ref=e177] [cursor=pointer]
+            - article [ref=e178]:
+              - generic [ref=e179]:
+                - generic [ref=e180]:
+                  - generic [ref=e181]: doc
+                  - generic [ref=e182]: /home/gemmey1020/.codex/skills/doc/SKILL.md
+                - generic [ref=e183]:
+                  - generic [ref=e184]: doc
+                  - generic [ref=e185]: $doc
+                  - generic [ref=e187]: top-level
+              - paragraph [ref=e188]: "Use when the task involves reading, creating, or editing `.docx` documents, especially when formatting or layout fidelity matters; prefer `python-docx` plus the bundled `scripts/render_docx.py` for visual checks."
+              - generic [ref=e189]:
+                - button "تفاصيل" [ref=e190] [cursor=pointer]
+                - button "انسخ invoke" [ref=e191] [cursor=pointer]
+            - article [ref=e192]:
+              - generic [ref=e193]:
+                - generic [ref=e194]:
+                  - generic [ref=e195]: figma
+                  - generic [ref=e196]: /home/gemmey1020/.codex/skills/figma/SKILL.md
+                - generic [ref=e197]:
+                  - generic [ref=e198]: figma
+                  - generic [ref=e199]: $figma
+                  - generic [ref=e201]: top-level
+              - paragraph [ref=e202]: Use the Figma MCP server to fetch design context, screenshots, variables, and assets from Figma, and to translate Figma nodes into production code. Trigger when a task involves Figma URLs, node IDs, design-to-code implementation, or Figma MCP setup and troubleshooting.
+              - generic [ref=e203]:
+                - button "تفاصيل" [ref=e204] [cursor=pointer]
+                - button "انسخ invoke" [ref=e205] [cursor=pointer]
+            - article [ref=e206]:
+              - generic [ref=e207]:
+                - generic [ref=e208]:
+                  - generic [ref=e209]: figma-implement-design
+                  - generic [ref=e210]: /home/gemmey1020/.codex/skills/figma-implement-design/SKILL.md
+                - generic [ref=e211]:
+                  - generic [ref=e212]: figma-implement-design
+                  - generic [ref=e213]: $figma-implement-design
+                  - generic [ref=e215]: top-level
+              - paragraph [ref=e216]: Translate Figma nodes into production-ready code with 1:1 visual fidelity using the Figma MCP workflow (design context, screenshots, assets, and project-convention translation). Trigger when the user provides Figma URLs or node IDs, or asks to implement designs or components that must match Figma specs. Requires a working Figma MCP server connection.
+              - generic [ref=e217]:
+                - button "تفاصيل" [ref=e218] [cursor=pointer]
+                - button "انسخ invoke" [ref=e219] [cursor=pointer]
+            - article [ref=e220]:
+              - generic [ref=e221]:
+                - generic [ref=e222]:
+                  - generic [ref=e223]: figma_mcp_operator
+                  - generic [ref=e224]: /home/gemmey1020/.codex/skills/figma_mcp_operator/SKILL.md
+                - generic [ref=e225]:
+                  - generic [ref=e226]: figma_mcp_operator
+                  - generic [ref=e227]: $figma_mcp_operator
+                  - generic [ref=e229]: top-level
+              - paragraph [ref=e230]: Operate Figma MCP work in a grounded, mode-aware way by reading design sources, extracting implementation intent, labeling deviations, and verifying parity before final delivery. Use when the task depends on Figma files, nodes, screenshots, variables, or design-to-code translation.
+              - generic [ref=e231]:
+                - button "تفاصيل" [ref=e232] [cursor=pointer]
+                - button "انسخ invoke" [ref=e233] [cursor=pointer]
+            - article [ref=e234]:
+              - generic [ref=e235]:
+                - generic [ref=e236]:
+                  - generic [ref=e237]: frontend-skill
+                  - generic [ref=e238]: /home/gemmey1020/.codex/skills/frontend-skill/SKILL.md
+                - generic [ref=e239]:
+                  - generic [ref=e240]: frontend-skill
+                  - generic [ref=e241]: $frontend-skill
+                  - generic [ref=e243]: top-level
+              - paragraph [ref=e244]: Use when the task asks for a visually strong landing page, website, app, prototype, demo, or game UI. This skill enforces restrained composition, image-led hierarchy, cohesive content structure, and tasteful motion while avoiding generic cards, weak branding, and UI clutter.
+              - generic [ref=e245]:
+                - button "تفاصيل" [ref=e246] [cursor=pointer]
+                - button "انسخ invoke" [ref=e247] [cursor=pointer]
+            - article [ref=e248]:
+              - generic [ref=e249]:
+                - generic [ref=e250]:
+                  - generic [ref=e251]: God Plan Mode
+                  - generic [ref=e252]: /home/gemmey1020/.codex/skills/god-plan-mode/SKILL.md
+                - generic [ref=e253]:
+                  - generic [ref=e254]: god-plan-mode
+                  - generic [ref=e255]: $god-plan-mode
+                  - generic [ref=e257]: top-level
+              - paragraph [ref=e258]: Build execution-ready plans for coding work that is ambiguous, risky, or multi-step. Use when Codex is in Planning mode or is explicitly asked to plan, scope, sequence, de-risk, or structure debugging, feature work, refactors, migrations, code reviews, repository exploration, or implementation strategy. Prefer this skill when the main challenge is deciding what to learn first, what to assume, what to ask, how to order work, how to prove completion, or when the user wants a stricter plan than the default planning behavior, including Omega-style structured output, Arabic RTL rendering, and best-practice validation against primary sources or $openai-docs for OpenAI-specific work.
+              - generic [ref=e259]:
+                - button "تفاصيل" [ref=e260] [cursor=pointer]
+                - button "انسخ invoke" [ref=e261] [cursor=pointer]
+            - article [ref=e262]:
+              - generic [ref=e263]:
+                - generic [ref=e264]:
+                  - generic [ref=e265]: jsonld-generator
+                  - generic [ref=e266]: /home/gemmey1020/.codex/skills/jsonld-generator/SKILL.md
+                - generic [ref=e267]:
+                  - generic [ref=e268]: jsonld-generator
+                  - generic [ref=e269]: $jsonld-generator
+                  - generic [ref=e271]: top-level
+              - paragraph [ref=e272]: Generate deterministic JSON-LD from a validated schema_mapping payload for Arabic-first, mobile-first portfolio work. Use when Codex must convert supported mapped targets into machine-readable JSON-LD for LocalBusiness and ProfessionalService only, without inventing values or expanding beyond the validated downstream mapping. Block with Ω_INSUFFICIENT_DATA if required mapping evidence is missing or unusable.
+              - generic [ref=e273]:
+                - button "تفاصيل" [ref=e274] [cursor=pointer]
+                - button "انسخ invoke" [ref=e275] [cursor=pointer]
+            - article [ref=e276]:
+              - generic [ref=e277]:
+                - generic [ref=e278]:
+                  - generic [ref=e279]: landing-generator
+                  - generic [ref=e280]: /home/gemmey1020/.codex/skills/landing-generator/SKILL.md
+                - generic [ref=e281]:
+                  - generic [ref=e282]: landing-generator
+                  - generic [ref=e283]: $landing-generator
+                  - generic [ref=e285]: top-level
+              - paragraph [ref=e286]: Generate a deterministic landing artifact from a validated downstream pipeline state for Arabic-first, mobile-first portfolio work. Use when Codex must convert a concrete trade_brief plus validated portfolio_output, schema_mapping_output, and jsonld_output into a renderer-safe section-and-slot landing_artifact without generating HTML, CSS, components, or page-builder logic. Block with Ω_INSUFFICIENT_DATA if required structural inputs are missing or unusable.
+              - generic [ref=e287]:
+                - button "تفاصيل" [ref=e288] [cursor=pointer]
+                - button "انسخ invoke" [ref=e289] [cursor=pointer]
+            - article [ref=e290]:
+              - generic [ref=e291]:
+                - generic [ref=e292]:
+                  - generic [ref=e293]: omega-ai-runtime
+                  - generic [ref=e294]: /home/gemmey1020/.codex/skills/omega-ai-runtime/SKILL.md
+                - generic [ref=e295]:
+                  - generic [ref=e296]: omega-ai-runtime
+                  - generic [ref=e297]: $omega-ai-runtime
+                  - generic [ref=e299]: top-level
+              - paragraph [ref=e300]: Use when designing or reviewing an AI feature and you need a decision-complete runtime spec covering OpenAI surface selection, model choice, prompts, tools, structured outputs, evals, and operational guardrails. Use for AI system design, not repo mapping or post-implementation proof selection.
+              - generic [ref=e301]:
+                - button "تفاصيل" [ref=e302] [cursor=pointer]
+                - button "انسخ invoke" [ref=e303] [cursor=pointer]
+            - article [ref=e304]:
+              - generic [ref=e305]:
+                - generic [ref=e306]:
+                  - generic [ref=e307]: Omega Conductor
+                  - generic [ref=e308]: /home/gemmey1020/.codex/skills/omega-conductor/SKILL.md
+                - generic [ref=e309]:
+                  - generic [ref=e310]: omega-conductor
+                  - generic [ref=e311]: $omega-conductor
+                  - generic [ref=e313]: top-level
+              - paragraph [ref=e314]: "Orchestrate an approved execution plan into the smallest safe execution graph. Use when `god-plan-mode` and `god-plan-critic` have already produced an approved plan and the next question is how to execute it: single-agent vs multi-agent, ownership, write scopes, sync points, escalation rules, integration order, and proof handoff. Prefer this skill when execution coordination is the blocker, especially for sub-agent work. Do not use for initial planning, plan critique, or final proof selection."
+              - generic [ref=e315]:
+                - button "تفاصيل" [ref=e316] [cursor=pointer]
+                - button "انسخ invoke" [ref=e317] [cursor=pointer]
+            - article [ref=e318]:
+              - generic [ref=e319]:
+                - generic [ref=e320]:
+                  - generic [ref=e321]: omega-format
+                  - generic [ref=e322]: /home/gemmey1020/.codex/skills/omega-format/SKILL.md
+                - generic [ref=e323]:
+                  - generic [ref=e324]: omega-format
+                  - generic [ref=e325]: $omega-format
+                  - generic [ref=e327]: top-level
+              - paragraph [ref=e328]: Use when replies need consistent user-facing formatting across Arabic, mixed Arabic-English, or English output while preserving structure-sensitive content. Routes final drafts through a classifier plus conservative formatting policy, defaults to markdown-safe output, and bypasses code, JSON, patches, commands, schemas, exact quotes, and other exact-structure replies.
+              - generic [ref=e329]:
+                - button "تفاصيل" [ref=e330] [cursor=pointer]
+                - button "انسخ invoke" [ref=e331] [cursor=pointer]
+            - article [ref=e332]:
+              - generic [ref=e333]:
+                - generic [ref=e334]:
+                  - generic [ref=e335]: omega-html
+                  - generic [ref=e336]: /home/gemmey1020/.codex/skills/omega-html/SKILL.md
+                - generic [ref=e337]:
+                  - generic [ref=e338]: omega-html
+                  - generic [ref=e339]: $omega-html
+                  - generic [ref=e341]: top-level
+              - paragraph [ref=e342]: Generate a single printable Omega-branded HTML report artifact from prompt-first Arabic or mixed RTL/LTR content. Use when the user wants an Omega print/report document in HTML as the source of truth for downstream pdf export. Do not use for websites, generic HTML pages, landing pages, React/Next.js/component work, or PDF export/QA.
+              - generic [ref=e343]:
+                - button "تفاصيل" [ref=e344] [cursor=pointer]
+                - button "انسخ invoke" [ref=e345] [cursor=pointer]
+            - article [ref=e346]:
+              - generic [ref=e347]:
+                - generic [ref=e348]:
+                  - generic [ref=e349]: Omega Proof Lock
+                  - generic [ref=e350]: /home/gemmey1020/.codex/skills/omega-proof-gate/SKILL.md
+                - generic [ref=e351]:
+                  - generic [ref=e352]: omega-proof-gate
+                  - generic [ref=e353]: $omega-proof-gate
+                  - generic [ref=e355]: top-level
+              - paragraph [ref=e356]: "Use after implementation, review, or targeted debugging when you need the smallest honest proof package: choose the strongest realistic checks, separate ran/not-run/blocked work, and write an honest closeout. Use for validation and closeout, not repo exploration or AI runtime design."
+              - generic [ref=e357]:
+                - button "تفاصيل" [ref=e358] [cursor=pointer]
+                - button "انسخ invoke" [ref=e359] [cursor=pointer]
+            - article [ref=e360]:
+              - generic [ref=e361]:
+                - generic [ref=e362]:
+                  - generic [ref=e363]: Omega Third Eye
+                  - generic [ref=e364]: /home/gemmey1020/.codex/skills/omega-repo-map/SKILL.md
+                - generic [ref=e365]:
+                  - generic [ref=e366]: omega-repo-map
+                  - generic [ref=e367]: $omega-repo-map
+                  - generic [ref=e369]: top-level
+              - paragraph [ref=e370]: Use when a task starts in an unfamiliar repository and you need a fast, evidence-first map of the stack, entrypoints, likely flow path, and blast radius before editing. Use for discovery and path tracing, not proof selection, closeout, or AI runtime design.
+              - generic [ref=e371]:
+                - button "تفاصيل" [ref=e372] [cursor=pointer]
+                - button "انسخ invoke" [ref=e373] [cursor=pointer]
+            - article [ref=e374]:
+              - generic [ref=e375]:
+                - generic [ref=e376]:
+                  - generic [ref=e377]: omega_ui_product_brain
+                  - generic [ref=e378]: /home/gemmey1020/.codex/skills/omega_ui_product_brain/SKILL.md
+                - generic [ref=e379]:
+                  - generic [ref=e380]: omega_ui_product_brain
+                  - generic [ref=e381]: $omega_ui_product_brain
+                  - generic [ref=e383]: top-level
+              - paragraph [ref=e384]: Orchestrate UI and product-design work across source extraction, generation, critique, system enforcement, and flow review. Use when the task requires deciding which design skill should act, in what order, under which mode, and with which guardrails.
+              - generic [ref=e385]:
+                - button "تفاصيل" [ref=e386] [cursor=pointer]
+                - button "انسخ invoke" [ref=e387] [cursor=pointer]
+            - article [ref=e388]:
+              - generic [ref=e389]:
+                - generic [ref=e390]:
+                  - generic [ref=e391]: openai-docs
+                  - generic [ref=e392]: /home/gemmey1020/.codex/skills/openai-docs/SKILL.md
+                - generic [ref=e393]:
+                  - generic [ref=e394]: openai-docs
+                  - generic [ref=e395]: $openai-docs
+                  - generic [ref=e397]: top-level
+              - paragraph [ref=e398]: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or explicit GPT-5.4 upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains.
+              - generic [ref=e399]:
+                - button "تفاصيل" [ref=e400] [cursor=pointer]
+                - button "انسخ invoke" [ref=e401] [cursor=pointer]
+            - article [ref=e402]:
+              - generic [ref=e403]:
+                - generic [ref=e404]:
+                  - generic [ref=e405]: pdf
+                  - generic [ref=e406]: /home/gemmey1020/.codex/skills/pdf/SKILL.md
+                - generic [ref=e407]:
+                  - generic [ref=e408]: pdf
+                  - generic [ref=e409]: $pdf
+                  - generic [ref=e411]: top-level
+              - paragraph [ref=e412]: "Use when tasks involve downstream HTML-to-PDF export, PDF inspection, or PDF QA where rendering matters. Prefer browser-based export for Omega print-grade HTML, rendered-page review via Poppler, and objective checks with `pdfinfo` and `pdffonts`; keep `reportlab` for simpler non-Omega PDF generation."
+              - generic [ref=e413]:
+                - button "تفاصيل" [ref=e414] [cursor=pointer]
+                - button "انسخ invoke" [ref=e415] [cursor=pointer]
+            - article [ref=e416]:
+              - generic [ref=e417]:
+                - generic [ref=e418]:
+                  - generic [ref=e419]: persistent-memory
+                  - generic [ref=e420]: /home/gemmey1020/.codex/skills/persistent-memory/SKILL.md
+                - generic [ref=e421]:
+                  - generic [ref=e422]: persistent-memory
+                  - generic [ref=e423]: $persistent-memory
+                  - generic [ref=e425]: top-level
+              - paragraph [ref=e426]: "Use when the user wants Codex to inspect, backfill, suggest, promote, reject, forget, rollback, or validate local durable memory stored in `~/.codex/memory`, including cross-workspace persona memory and project overlays."
+              - generic [ref=e427]:
+                - button "تفاصيل" [ref=e428] [cursor=pointer]
+                - button "انسخ invoke" [ref=e429] [cursor=pointer]
+            - article [ref=e430]:
+              - generic [ref=e431]:
+                - generic [ref=e432]:
+                  - generic [ref=e433]: God Plan Critic
+                  - generic [ref=e434]: /home/gemmey1020/.codex/skills/plan-critic/SKILL.md
+                - generic [ref=e435]:
+                  - generic [ref=e436]: plan-critic
+                  - generic [ref=e437]: $plan-critic
+                  - generic [ref=e439]: top-level
+              - paragraph [ref=e440]: Critique execution plans, implementation strategies, and multi-step coding proposals before work begins. Use when Codex or the user already has a draft plan and needs a findings-first stress test of mission lock, sequencing, verification, dependencies, rollback, scope, or OpenAI-specific assumptions. Prefer this skill when the goal is to challenge, repair, or reject a plan rather than generate one from scratch. Do not trigger for trivial direct-execution requests or when no plan artifact exists to critique.
+              - generic [ref=e441]:
+                - button "تفاصيل" [ref=e442] [cursor=pointer]
+                - button "انسخ invoke" [ref=e443] [cursor=pointer]
+            - article [ref=e444]:
+              - generic [ref=e445]:
+                - generic [ref=e446]:
+                  - generic [ref=e447]: playwright
+                  - generic [ref=e448]: /home/gemmey1020/.codex/skills/playwright/SKILL.md
+                - generic [ref=e449]:
+                  - generic [ref=e450]: playwright
+                  - generic [ref=e451]: $playwright
+                  - generic [ref=e453]: top-level
+              - paragraph [ref=e454]: "Use when the task requires automating a real browser from the terminal (navigation, form filling, snapshots, screenshots, data extraction, UI-flow debugging) via `playwright-cli` or the bundled wrapper script."
+              - generic [ref=e455]:
+                - button "تفاصيل" [ref=e456] [cursor=pointer]
+                - button "انسخ invoke" [ref=e457] [cursor=pointer]
+            - article [ref=e458]:
+              - generic [ref=e459]:
+                - generic [ref=e460]:
+                  - generic [ref=e461]: portfolio-spectrum-builder
+                  - generic [ref=e462]: /home/gemmey1020/.codex/skills/portfolio-spectrum-builder/SKILL.md
+                - generic [ref=e463]:
+                  - generic [ref=e464]: portfolio-spectrum-builder
+                  - generic [ref=e465]: $portfolio-spectrum-builder
+                  - generic [ref=e467]: top-level
+              - paragraph [ref=e468]: Build a deterministic LITE / DEFAULT / PREMIUM portfolio spectrum from a concrete tradesperson brief for Arabic-first, mobile-first portfolio work. Use when Codex must turn a real trade brief into an execution-ready tiered portfolio structure with ordered sections, WhatsApp CTA logic, copy direction, proof requirements, schema targets, and minimal source evidence. Block with Ω_INSUFFICIENT_DATA if critical brief facts are missing or unusable instead of inventing them.
+              - generic [ref=e469]:
+                - button "تفاصيل" [ref=e470] [cursor=pointer]
+                - button "انسخ invoke" [ref=e471] [cursor=pointer]
+            - article [ref=e472]:
+              - generic [ref=e473]:
+                - generic [ref=e474]:
+                  - generic [ref=e475]: premium_ui_generator
+                  - generic [ref=e476]: /home/gemmey1020/.codex/skills/premium_ui_generator/SKILL.md
+                - generic [ref=e477]:
+                  - generic [ref=e478]: premium_ui_generator
+                  - generic [ref=e479]: $premium_ui_generator
+                  - generic [ref=e481]: top-level
+              - paragraph [ref=e482]: Generate or refine UI with stronger hierarchy, calmer composition, better spacing, clearer CTA emphasis, and more trustworthy product presentation while respecting source constraints, system rules, and active mode. Use when the user wants implementation, premium refinement, or stronger UI composition.
+              - generic [ref=e483]:
+                - button "تفاصيل" [ref=e484] [cursor=pointer]
+                - button "انسخ invoke" [ref=e485] [cursor=pointer]
+            - article [ref=e486]:
+              - generic [ref=e487]:
+                - generic [ref=e488]:
+                  - generic [ref=e489]: product_flow_architect
+                  - generic [ref=e490]: /home/gemmey1020/.codex/skills/product_flow_architect/SKILL.md
+                - generic [ref=e491]:
+                  - generic [ref=e492]: product_flow_architect
+                  - generic [ref=e493]: $product_flow_architect
+                  - generic [ref=e495]: top-level
+              - paragraph [ref=e496]: Evaluate and strengthen product flow clarity across user goals, primary actions, friction points, trust cues, and critical interface states. Use when the user wants UX flow review, conversion path improvement, clearer task progression, or stronger product logic behind the UI.
+              - generic [ref=e497]:
+                - button "تفاصيل" [ref=e498] [cursor=pointer]
+                - button "انسخ invoke" [ref=e499] [cursor=pointer]
+            - article [ref=e500]:
+              - generic [ref=e501]:
+                - generic [ref=e502]:
+                  - generic [ref=e503]: render-artifact-generator
+                  - generic [ref=e504]: /home/gemmey1020/.codex/skills/render-artifact-generator/SKILL.md
+                - generic [ref=e505]:
+                  - generic [ref=e506]: render-artifact-generator
+                  - generic [ref=e507]: $render-artifact-generator
+                  - generic [ref=e509]: top-level
+              - paragraph [ref=e510]: Generate a deterministic render artifact from a validated downstream renderer state for Arabic-first, mobile-first portfolio work. Use when Codex must convert validated landing_output, seo_output, and jsonld_output into a renderer-safe render_artifact without generating HTML, CSS, framework code, copy, or invented fallback content. Block with Ω_INSUFFICIENT_DATA if required structural inputs are missing or unusable.
+              - generic [ref=e511]:
+                - button "تفاصيل" [ref=e512] [cursor=pointer]
+                - button "انسخ invoke" [ref=e513] [cursor=pointer]
+            - article [ref=e514]:
+              - generic [ref=e515]:
+                - generic [ref=e516]:
+                  - generic [ref=e517]: schema-mapper
+                  - generic [ref=e518]: /home/gemmey1020/.codex/skills/schema-mapper/SKILL.md
+                - generic [ref=e519]:
+                  - generic [ref=e520]: schema-mapper
+                  - generic [ref=e521]: $schema-mapper
+                  - generic [ref=e523]: top-level
+              - paragraph [ref=e524]: Map a validated portfolio_spectrum payload into schema-ready mapping targets for Arabic-first, mobile-first portfolio work. Use when Codex must turn an approved portfolio_spectrum into deterministic section-to-target and entity-to-target mappings for LocalBusiness and ProfessionalService without generating JSON-LD. Block with Ω_INSUFFICIENT_DATA if required upstream evidence is missing or unusable instead of inventing fields or values.
+              - generic [ref=e525]:
+                - button "تفاصيل" [ref=e526] [cursor=pointer]
+                - button "انسخ invoke" [ref=e527] [cursor=pointer]
+            - article [ref=e528]:
+              - generic [ref=e529]:
+                - generic [ref=e530]:
+                  - generic [ref=e531]: security-best-practices
+                  - generic [ref=e532]: /home/gemmey1020/.codex/skills/security-best-practices/SKILL.md
+                - generic [ref=e533]:
+                  - generic [ref=e534]: security-best-practices
+                  - generic [ref=e535]: $security-best-practices
+                  - generic [ref=e537]: top-level
+              - paragraph [ref=e538]: Perform language and framework specific security best-practice reviews and suggest improvements. Trigger only when the user explicitly requests security best practices guidance, a security review/report, or secure-by-default coding help. Trigger only for supported languages (python, javascript/typescript, go). Do not trigger for general code review, debugging, or non-security tasks.
+              - generic [ref=e539]:
+                - button "تفاصيل" [ref=e540] [cursor=pointer]
+                - button "انسخ invoke" [ref=e541] [cursor=pointer]
+            - article [ref=e542]:
+              - generic [ref=e543]:
+                - generic [ref=e544]:
+                  - generic [ref=e545]: security-ownership-map
+                  - generic [ref=e546]: /home/gemmey1020/.codex/skills/security-ownership-map/SKILL.md
+                - generic [ref=e547]:
+                  - generic [ref=e548]: security-ownership-map
+                  - generic [ref=e549]: $security-ownership-map
+                  - generic [ref=e551]: top-level
+              - paragraph [ref=e552]: "Analyze git repositories to build a security ownership topology (people-to-file), compute bus factor and sensitive-code ownership, and export CSV/JSON for graph databases and visualization. Trigger only when the user explicitly wants a security-oriented ownership or bus-factor analysis grounded in git history (for example: orphaned sensitive code, security maintainers, CODEOWNERS reality checks for risk, sensitive hotspots, or ownership clusters). Do not trigger for general maintainer lists or non-security ownership questions."
+              - generic [ref=e553]:
+                - button "تفاصيل" [ref=e554] [cursor=pointer]
+                - button "انسخ invoke" [ref=e555] [cursor=pointer]
+            - article [ref=e556]:
+              - generic [ref=e557]:
+                - generic [ref=e558]:
+                  - generic [ref=e559]: security-threat-model
+                  - generic [ref=e560]: /home/gemmey1020/.codex/skills/security-threat-model/SKILL.md
+                - generic [ref=e561]:
+                  - generic [ref=e562]: security-threat-model
+                  - generic [ref=e563]: $security-threat-model
+                  - generic [ref=e565]: top-level
+              - paragraph [ref=e566]: Repository-grounded threat modeling that enumerates trust boundaries, assets, attacker capabilities, abuse paths, and mitigations, and writes a concise Markdown threat model. Trigger only when the user explicitly asks to threat model a codebase or path, enumerate threats/abuse paths, or perform AppSec threat modeling. Do not trigger for general architecture summaries, code review, or non-security design work.
+              - generic [ref=e567]:
+                - button "تفاصيل" [ref=e568] [cursor=pointer]
+                - button "انسخ invoke" [ref=e569] [cursor=pointer]
+            - article [ref=e570]:
+              - generic [ref=e571]:
+                - generic [ref=e572]:
+                  - generic [ref=e573]: self-learn
+                  - generic [ref=e574]: /home/gemmey1020/.codex/skills/self-learn/SKILL.md
+                - generic [ref=e575]:
+                  - generic [ref=e576]: self-learn
+                  - generic [ref=e577]: $self-learn
+                  - generic [ref=e579]: top-level
+              - paragraph [ref=e580]: Deterministic self-only skill hardening with explicit observe, propose, apply, report, and rollback flows. Use for local bounded self-improvement inside this skill only, with safe-template apply, event-sourced rollback, deny-by-default mutation policy, and read-focused reporting.
+              - generic [ref=e581]:
+                - button "تفاصيل" [ref=e582] [cursor=pointer]
+                - button "انسخ invoke" [ref=e583] [cursor=pointer]
+            - article [ref=e584]:
+              - generic [ref=e585]:
+                - generic [ref=e586]:
+                  - generic [ref=e587]: sentry
+                  - generic [ref=e588]: /home/gemmey1020/.codex/skills/sentry/SKILL.md
+                - generic [ref=e589]:
+                  - generic [ref=e590]: sentry
+                  - generic [ref=e591]: $sentry
+                  - generic [ref=e593]: top-level
+              - paragraph [ref=e594]: Use when the user needs to establish, validate, integrate, or later operate a portable Sentry workspace capability; start with local foundation checks, define integration contracts for future services, and use the bundled read-only API script only after readiness gates pass.
+              - generic [ref=e595]:
+                - button "تفاصيل" [ref=e596] [cursor=pointer]
+                - button "انسخ invoke" [ref=e597] [cursor=pointer]
+            - article [ref=e598]:
+              - generic [ref=e599]:
+                - generic [ref=e600]:
+                  - generic [ref=e601]: seo-artifact-generator
+                  - generic [ref=e602]: /home/gemmey1020/.codex/skills/seo-artifact-generator/SKILL.md
+                - generic [ref=e603]:
+                  - generic [ref=e604]: seo-artifact-generator
+                  - generic [ref=e605]: $seo-artifact-generator
+                  - generic [ref=e607]: top-level
+              - paragraph [ref=e608]: Generate a deterministic SEO artifact from a validated downstream pipeline state for Arabic-first, mobile-first portfolio work. Use when Codex must convert a concrete trade_brief plus validated portfolio_output, schema_mapping_output, jsonld_output, and landing_output into a renderer-safe seo_artifact without generating HTML, page copy, external SEO intelligence, or invented claims. Block with Ω_INSUFFICIENT_DATA if required structural inputs are missing or unusable.
+              - generic [ref=e609]:
+                - button "تفاصيل" [ref=e610] [cursor=pointer]
+                - button "انسخ invoke" [ref=e611] [cursor=pointer]
+            - article [ref=e612]:
+              - generic [ref=e613]:
+                - generic [ref=e614]:
+                  - generic [ref=e615]: speech
+                  - generic [ref=e616]: /home/gemmey1020/.codex/skills/speech/SKILL.md
+                - generic [ref=e617]:
+                  - generic [ref=e618]: speech
+                  - generic [ref=e619]: $speech
+                  - generic [ref=e621]: top-level
+              - paragraph [ref=e622]: "Use when the user asks for text-to-speech narration or voiceover, accessibility reads, audio prompts, or batch speech generation via the OpenAI Audio API; run the bundled CLI (`scripts/text_to_speech.py`) with built-in voices and require `OPENAI_API_KEY` for live calls. Custom voice creation is out of scope."
+              - generic [ref=e623]:
+                - button "تفاصيل" [ref=e624] [cursor=pointer]
+                - button "انسخ invoke" [ref=e625] [cursor=pointer]
+            - article [ref=e626]:
+              - generic [ref=e627]:
+                - generic [ref=e628]:
+                  - generic [ref=e629]: spreadsheet
+                  - generic [ref=e630]: /home/gemmey1020/.codex/skills/spreadsheet/SKILL.md
+                - generic [ref=e631]:
+                  - generic [ref=e632]: spreadsheet
+                  - generic [ref=e633]: $spreadsheet
+                  - generic [ref=e635]: top-level
+              - paragraph [ref=e636]: "Use when tasks involve creating, editing, analyzing, or formatting spreadsheets (`.xlsx`, `.csv`, `.tsv`) using Python (`openpyxl`, `pandas`), especially when formulas, references, and formatting need to be preserved and verified."
+              - generic [ref=e637]:
+                - button "تفاصيل" [ref=e638] [cursor=pointer]
+                - button "انسخ invoke" [ref=e639] [cursor=pointer]
+            - article [ref=e640]:
+              - generic [ref=e641]:
+                - generic [ref=e642]:
+                  - generic [ref=e643]: teach_me
+                  - generic [ref=e644]: /home/gemmey1020/.codex/skills/teach_me/SKILL.md
+                - generic [ref=e645]:
+                  - generic [ref=e646]: teach_me
+                  - generic [ref=e647]: $teach_me
+                  - generic [ref=e649]: top-level
+              - paragraph [ref=e650]: Teach and explain concrete technical artifacts from the current repo or session in an evidence-first way. Use when the user asks to understand code, errors, logs, diffs, command output, configs, request flow, or repo-grounded architecture. Prefer this skill for understanding-first requests and explicit teaching requests. Do not use for implementation-first tasks, pure theory tutoring, rewrites, or generic summaries.
+              - generic [ref=e651]:
+                - button "تفاصيل" [ref=e652] [cursor=pointer]
+                - button "انسخ invoke" [ref=e653] [cursor=pointer]
+            - article [ref=e654]:
+              - generic [ref=e655]:
+                - generic [ref=e656]:
+                  - generic [ref=e657]: ui_taste_critic
+                  - generic [ref=e658]: /home/gemmey1020/.codex/skills/ui_taste_critic/SKILL.md
+                - generic [ref=e659]:
+                  - generic [ref=e660]: ui_taste_critic
+                  - generic [ref=e661]: $ui_taste_critic
+                  - generic [ref=e663]: top-level
+              - paragraph [ref=e664]: Critique and strengthen UI quality using evidence-based design judgment across hierarchy, spacing, typography, contrast, density, consistency, CTA clarity, and polish. Use when the user wants UI review, visual cleanup, stronger taste, premium refinement, or actionable design feedback.
+              - generic [ref=e665]:
+                - button "تفاصيل" [ref=e666] [cursor=pointer]
+                - button "انسخ invoke" [ref=e667] [cursor=pointer]
+            - article [ref=e668]:
+              - generic [ref=e669]:
+                - generic [ref=e670]:
+                  - generic [ref=e671]: vercel-deploy
+                  - generic [ref=e672]: /home/gemmey1020/.codex/skills/vercel-deploy/SKILL.md
+                - generic [ref=e673]:
+                  - generic [ref=e674]: vercel-deploy
+                  - generic [ref=e675]: $vercel-deploy
+                  - generic [ref=e677]: top-level
+              - paragraph [ref=e678]: Deploy applications and websites to Vercel. Use when the user requests deployment actions like "deploy my app", "deploy and give me the link", "push this live", or "create a preview deployment".
+              - generic [ref=e679]:
+                - button "تفاصيل" [ref=e680] [cursor=pointer]
+                - button "انسخ invoke" [ref=e681] [cursor=pointer]
+            - article [ref=e682]:
+              - generic [ref=e683]:
+                - generic [ref=e684]:
+                  - generic [ref=e685]: yeet
+                  - generic [ref=e686]: /home/gemmey1020/.codex/skills/yeet/SKILL.md
+                - generic [ref=e687]:
+                  - generic [ref=e688]: yeet
+                  - generic [ref=e689]: $yeet
+                  - generic [ref=e691]: top-level
+              - paragraph [ref=e692]: "Use only when the user explicitly asks to stage, commit, push, and open a GitHub pull request in one flow using the GitHub CLI (`gh`)."
+              - generic [ref=e693]:
+                - button "تفاصيل" [ref=e694] [cursor=pointer]
+                - button "انسخ invoke" [ref=e695] [cursor=pointer]
+        - article [ref=e696]:
+          - heading "System skills" [level=3] [ref=e697]
+          - generic [ref=e698]:
+            - article [ref=e699]:
+              - generic [ref=e700]:
+                - generic [ref=e701]:
+                  - generic [ref=e702]: openai-docs
+                  - generic [ref=e703]: /home/gemmey1020/.codex/skills/.system/openai-docs/SKILL.md
+                - generic [ref=e704]:
+                  - generic [ref=e705]: openai-docs
+                  - generic [ref=e706]: $openai-docs
+                  - generic [ref=e708]: system
+              - paragraph [ref=e709]: Use when the user asks how to build with OpenAI products or APIs and needs up-to-date official documentation with citations, help choosing the latest model for a use case, or explicit GPT-5.4 upgrade and prompt-upgrade guidance; prioritize OpenAI docs MCP tools, use bundled references only as helper context, and restrict any fallback browsing to official OpenAI domains.
+              - generic [ref=e710]:
+                - button "تفاصيل" [ref=e711] [cursor=pointer]
+                - button "انسخ invoke" [ref=e712] [cursor=pointer]
+            - article [ref=e713]:
+              - generic [ref=e714]:
+                - generic [ref=e715]:
+                  - generic [ref=e716]: skill-creator
+                  - generic [ref=e717]: /home/gemmey1020/.codex/skills/.system/skill-creator/SKILL.md
+                - generic [ref=e718]:
+                  - generic [ref=e719]: skill-creator
+                  - generic [ref=e720]: $skill-creator
+                  - generic [ref=e722]: system
+              - paragraph [ref=e723]: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Codex's capabilities with specialized knowledge, workflows, or tool integrations.
+              - generic [ref=e724]:
+                - button "تفاصيل" [ref=e725] [cursor=pointer]
+                - button "انسخ invoke" [ref=e726] [cursor=pointer]
+            - article [ref=e727]:
+              - generic [ref=e728]:
+                - generic [ref=e729]:
+                  - generic [ref=e730]: skill-installer
+                  - generic [ref=e731]: /home/gemmey1020/.codex/skills/.system/skill-installer/SKILL.md
+                - generic [ref=e732]:
+                  - generic [ref=e733]: skill-installer
+                  - generic [ref=e734]: $skill-installer
+                  - generic [ref=e736]: system
+              - paragraph [ref=e737]: Install Codex skills into $CODEX_HOME/skills from a curated list or a GitHub repo path. Use when a user asks to list installable skills, install a curated skill, or install a skill from another repo (including private repos).
+              - generic [ref=e738]:
+                - button "تفاصيل" [ref=e739] [cursor=pointer]
+                - button "انسخ invoke" [ref=e740] [cursor=pointer]
+  - complementary
+  - generic [ref=e79]: "OMEGA COCKPIT ADMIN V2 / local control plane / local-only truth / omega-hud-{filename}.html"

@@ -10,10 +10,13 @@ import secrets
 import sqlite3
 import subprocess
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from time import perf_counter
 from typing import Any
+from urllib.parse import quote
 
 import yaml
 
@@ -36,8 +39,10 @@ DEFAULT_MEMORY_CLI = REAL_CODEX_HOME / "skills" / "persistent-memory" / "scripts
 DEFAULT_CATALOG_PATH = ROOT / "omega-runtime" / "skills" / "OMEGA_SKILL_CATALOG.yaml"
 DEFAULT_OUTPUT_DIR = ROOT / "output" / "html"
 WORKSPACE_ROOT = ROOT
-SURFACE_IDS = {"skills-review", "memory"}
+SURFACE_IDS = {"skills-review", "memory", "artifacts", "runtime"}
 NONCE_HEADER = "X-Omega-Session-Nonce"
+ADMIN_PASSCODE_ENV = "OMEGA_COCKPIT_ADMIN_PASSCODE"
+IMPLEMENTATION_REPORT_NAME = "omega-hud-admin-v2-implementation-report.html"
 
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n?(.*)\Z", re.DOTALL)
 PUBLIC_NAME_RE = re.compile(r"Its public(?:/operator)? name is `([^`]+)`\.", re.IGNORECASE)
@@ -407,6 +412,334 @@ APP_CSS = """
 """
 
 
+COMMAND_DECK_CSS = """
+body.cockpit-admin-v2 {
+  background:
+    radial-gradient(circle at top right, rgba(88, 190, 255, 0.14), transparent 26%),
+    radial-gradient(circle at 15% 20%, rgba(255, 184, 77, 0.08), transparent 20%),
+    linear-gradient(180deg, #05080d 0%, #091019 44%, #05080c 100%);
+}
+
+.page-shell.command-deck-shell {
+  max-width: none;
+  padding: 18px;
+  gap: 18px;
+}
+
+.cockpit-admin-v2 .utility-bar {
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  backdrop-filter: blur(18px);
+  background:
+    linear-gradient(180deg, rgba(4, 10, 17, 0.92), rgba(4, 10, 17, 0.78)),
+    rgba(4, 10, 17, 0.82);
+  border: 1px solid rgba(126, 179, 216, 0.18);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+}
+
+.command-deck-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 18px;
+  min-height: calc(100vh - 150px);
+}
+
+.deck-sidebar,
+.deck-main {
+  min-width: 0;
+}
+
+.deck-sidebar {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.sidebar-card,
+.route-shell,
+.summary-panel,
+.stream-panel,
+.operator-frame {
+  border-radius: 24px;
+  border: 1px solid rgba(126, 179, 216, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 30%),
+    rgba(8, 13, 21, 0.88);
+  box-shadow: 0 20px 38px rgba(0, 0, 0, 0.22);
+}
+
+.sidebar-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.sidebar-card h3,
+.sidebar-card p,
+.sidebar-card ul,
+.route-shell h2,
+.route-shell p,
+.summary-panel h3,
+.summary-panel p,
+.stream-panel h3,
+.stream-panel p,
+.operator-frame h3,
+.operator-frame p {
+  margin: 0;
+}
+
+.deck-nav {
+  display: grid;
+  gap: 10px;
+}
+
+.deck-nav .route-anchor {
+  justify-content: space-between;
+  min-height: 50px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.deck-nav .route-anchor.is-active {
+  border-color: rgba(127, 205, 255, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(127, 205, 255, 0.08);
+}
+
+.deck-main {
+  display: grid;
+  gap: 16px;
+}
+
+.route-shell {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.route-shell__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.route-shell__intro {
+  display: grid;
+  gap: 8px;
+}
+
+.route-shell__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.summary-band {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.summary-panel {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+
+.summary-panel__value {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.summary-panel__label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.stream-panel,
+.operator-frame {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.surface-stream {
+  display: grid;
+  gap: 10px;
+}
+
+.stream-row {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(126, 179, 216, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.stream-row__meta,
+.stream-row__actions,
+.toolbar-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.stream-row__headline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.stream-row__title {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.stream-row__subtitle {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.stream-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+}
+
+.toolbar-stack,
+.field-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.field-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.field-inline > * {
+  flex: 1 1 160px;
+}
+
+.search-input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(126, 179, 216, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink);
+  font: inherit;
+}
+
+.sidebar-kpi {
+  display: grid;
+  gap: 4px;
+}
+
+.sidebar-kpi strong {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.session-lock-slot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.lock-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(126, 179, 216, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 12px;
+}
+
+.lock-chip--armed {
+  border-color: rgba(158, 212, 176, 0.38);
+  color: var(--success);
+}
+
+.lock-chip--locked {
+  border-color: rgba(255, 184, 77, 0.34);
+  color: #ffd48d;
+}
+
+.lock-chip--disabled {
+  border-color: rgba(233, 139, 120, 0.32);
+  color: var(--danger);
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.44;
+  transform: none;
+}
+
+.command-note {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.artifact-family-tag {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.code-block {
+  margin: 0;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(126, 179, 216, 0.12);
+  background: rgba(2, 6, 10, 0.52);
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 1080px) {
+  .command-deck-layout,
+  .stream-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .deck-sidebar {
+    order: 2;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-shell.command-deck-shell {
+    padding: 10px;
+  }
+
+  .route-shell,
+  .summary-panel,
+  .stream-panel,
+  .operator-frame,
+  .sidebar-card {
+    border-radius: 18px;
+  }
+}
+"""
+
+
 @dataclass
 class CockpitConfig:
     workspace_root: Path = WORKSPACE_ROOT
@@ -417,6 +750,7 @@ class CockpitConfig:
     host: str = "127.0.0.1"
     port: int = 8765
     session_nonce: str | None = None
+    admin_passcode: str | None = None
 
     @property
     def skills_root(self) -> Path:
@@ -436,6 +770,7 @@ class CockpitConfig:
             host=self.host,
             port=self.port,
             session_nonce=self.session_nonce or secrets.token_hex(16),
+            admin_passcode=self.admin_passcode if self.admin_passcode is not None else os.environ.get(ADMIN_PASSCODE_ENV),
         )
 
 
@@ -1071,6 +1406,23 @@ def serialize_health(config: CockpitConfig) -> dict[str, Any]:
         "allowed_surfaces": sorted(SURFACE_IDS),
         "host": config.host,
         "port": config.port,
+        "ui_version": "omega-cockpit-admin-v2",
+        "passcode_env": ADMIN_PASSCODE_ENV,
+        "passcode_configured": bool(config.admin_passcode),
+    }
+
+
+def default_session_payload(config: CockpitConfig) -> dict[str, Any]:
+    configured = bool(config.admin_passcode)
+    return {
+        "mode": "mutations-only",
+        "passcode_configured": configured,
+        "unlocked": False,
+        "writes_available": False,
+        "lock_reason": "locked" if configured else "passcode-missing",
+        "unlock_count": 0,
+        "last_unlock_at": None,
+        "last_lock_at": None,
     }
 
 
@@ -1078,17 +1430,19 @@ def metric_strip(items: list[tuple[Any, str, str, str]]) -> str:
     return "".join(v2.metric_pill(value, ar, en, tone) for value, ar, en, tone in items)
 
 
-def cockpit_topbar(page_label_ar: str, page_label_en: str, meta_html: str) -> str:
+def cockpit_topbar(page_label_ar: str, page_label_en: str, meta_html: str, *, session_slot: bool = False) -> str:
+    session_html = '<div id="session-lock-slot" class="session-lock-slot"></div>' if session_slot else ""
     return f"""
       <header class="utility-bar">
         <div class="brand-lockup">
-          <strong>OMEGA COCKPIT V1</strong>
+          <strong>OMEGA COCKPIT ADMIN V2</strong>
           <span>{v2.bilingual_html(page_label_ar, page_label_en, "span")}</span>
         </div>
         <div class="metric-strip">
           {meta_html}
         </div>
         <div class="control-cluster">
+          {session_html}
           {v2.state_readout("lang-state")}
           {v2.control_button("lang-toggle", "تبديل اللغة", "Switch Lang")}
           {v2.state_readout("theme-state")}
@@ -1111,7 +1465,7 @@ def render_shell(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="omega:brand_profile" content="omega-cockpit-v1">
+  <meta name="omega:brand_profile" content="omega-cockpit-admin-v2">
   <meta name="omega:handoff:lang" content="ar,en">
   <meta name="omega:handoff:dir" content="rtl,ltr">
   <link rel="icon" href="data:,">
@@ -1119,12 +1473,13 @@ def render_shell(
   <style>
 {v7.V7_CSS}
 {APP_CSS}
+{COMMAND_DECK_CSS}
   </style>
 </head>
 <body class="{escape(body_class)}">
-  <div class="page-shell">
+  <div class="page-shell command-deck-shell">
     {body_html}
-    <div class="footer-note">OMEGA COCKPIT V1 / live local app / local-only truth / exported snapshots follow `omega-hud-{'{filename}'}.html`</div>
+    <div class="footer-note">OMEGA COCKPIT ADMIN V2 / local control plane / local-only truth / omega-hud-{'{filename}'}.html</div>
   </div>
   <script>
 {v2.SHARED_JS}
@@ -1152,26 +1507,157 @@ def report_list(items: list[str]) -> str:
 
 def compact_skill_card(skill: dict[str, Any]) -> str:
     return f"""
-      <article class="surface-card">
-        <div class="surface-card__header">
-          <div class="stack-column">
-            <h3>{escape(skill["display_name"])}</h3>
-            <span class="path-label">{escape(skill["source_path"])}</span>
+      <article class="stream-row">
+        <div class="stream-row__headline">
+          <div>
+            <div class="stream-row__title">{escape(skill["display_name"])}</div>
+            <div class="stream-row__subtitle">{escape(skill["source_path"])}</div>
           </div>
-          <div class="tag-row">
+          <div class="stream-row__meta">
             {v2.code_tag(skill["skill_id"])}
             {v2.code_tag(skill["invoke"])}
             {v2.inline_tag("system" if skill["scope"] == "system" else "top-level", skill["scope"], "accent" if skill["scope"] == "top-level" else "")}
           </div>
         </div>
         <p class="muted-copy">{escape(skill["description"] or "No description.")}</p>
-        <div class="tag-row">
-          {v2.inline_tag("scripts" if skill["has_scripts"] else "no scripts", "scripts" if skill["has_scripts"] else "no scripts")}
-          {v2.inline_tag("assets" if skill["has_assets"] else "no assets", "assets" if skill["has_assets"] else "no assets")}
-          {v2.inline_tag("refs" if skill["has_references"] else "no refs", "refs" if skill["has_references"] else "no refs")}
-        </div>
       </article>
     """
+
+
+def artifact_family(name: str) -> tuple[str, str, str]:
+    if name == IMPLEMENTATION_REPORT_NAME:
+        return "omega-admin-report", "تقرير التنفيذ", "Implementation report"
+    if name == "omega-hud-html.html":
+        return "omega-hud-legacy", "أرشيف HUD قديم", "Legacy HUD archive"
+    if name.startswith("omega-hud-"):
+        return "omega-hud", "Omega HUD", "Omega HUD"
+    if name.startswith("omega-planning-"):
+        return "omega-planning", "Omega Planning", "Omega Planning"
+    if name.startswith("omega-memory-"):
+        return "omega-memory", "Omega Memory", "Omega Memory"
+    if name.startswith("omega-skills-"):
+        return "omega-skills", "Omega Skills", "Omega Skills"
+    return "other", "أخرى", "Other"
+
+
+def artifact_record(path: Path) -> dict[str, Any]:
+    family_id, family_ar, family_en = artifact_family(path.name)
+    pdf_path = path.with_suffix(".pdf")
+    qa_path = path.with_suffix(".qa")
+    return {
+        "artifact_name": path.name,
+        "stem": path.stem,
+        "absolute_path": str(path.resolve()),
+        "relative_path": str(path),
+        "public_path": f"/exports/{quote(path.name)}",
+        "family_id": family_id,
+        "family_label_ar": family_ar,
+        "family_label_en": family_en,
+        "size_bytes": path.stat().st_size,
+        "modified_at": datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat().replace("+00:00", "Z"),
+        "has_pdf_companion": pdf_path.exists(),
+        "pdf_companion": pdf_path.name if pdf_path.exists() else None,
+        "has_qa_companion": qa_path.exists(),
+        "qa_companion": qa_path.name if qa_path.exists() else None,
+        "is_legacy": path.name == "omega-hud-html.html",
+        "is_report": path.name == IMPLEMENTATION_REPORT_NAME,
+    }
+
+
+def load_artifacts_index(output_dir: Path) -> dict[str, Any]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    items = [artifact_record(path) for path in sorted(output_dir.glob("*.html"), key=lambda item: item.stat().st_mtime, reverse=True)]
+    family_counts = Counter(item["family_id"] for item in items)
+    summary = {
+        "total_html": len(items),
+        "with_pdf_companion": sum(1 for item in items if item["has_pdf_companion"]),
+        "with_qa_companion": sum(1 for item in items if item["has_qa_companion"]),
+        "legacy_total": sum(1 for item in items if item["is_legacy"]),
+        "report_total": sum(1 for item in items if item["is_report"]),
+        "families": [
+            {
+                "family_id": family_id,
+                "count": count,
+            }
+            for family_id, count in sorted(family_counts.items(), key=lambda item: (-item[1], item[0]))
+        ],
+    }
+    return {"generated_at": utc_now(), "summary": summary, "items": items}
+
+
+def get_artifact_detail(config: CockpitConfig, artifact_name: str) -> dict[str, Any] | None:
+    for item in load_artifacts_index(config.output_dir)["items"]:
+        if item["artifact_name"] == artifact_name:
+            return item
+    return None
+
+
+def timed_probe(callback: Any) -> tuple[Any | None, float, str | None]:
+    started = perf_counter()
+    try:
+        result = callback()
+    except Exception as exc:  # noqa: BLE001
+        return None, round((perf_counter() - started) * 1000, 2), str(exc)
+    return result, round((perf_counter() - started) * 1000, 2), None
+
+
+def build_runtime_overview(
+    config: CockpitConfig,
+    session_state: dict[str, Any] | None = None,
+    export_ledger: list[dict[str, Any]] | None = None,
+    mutation_ledger: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    session = session_state or default_session_payload(config)
+    health = serialize_health(config)
+    skills, skills_ms, skills_error = timed_probe(lambda: scan_live_skills(config.skills_root, config.catalog_path))
+    audit = build_skill_audit(skills or [], config.catalog_path) if skills is not None else {"summary": {}}
+    doctor, doctor_ms, doctor_error = timed_probe(lambda: doctor_payload(config))
+    analytics, analytics_ms, analytics_error = timed_probe(lambda: load_memory_analytics(config))
+    artifacts, artifacts_ms, artifacts_error = timed_probe(lambda: load_artifacts_index(config.output_dir))
+
+    notices = []
+    for label, error in (
+        ("skills", skills_error),
+        ("memory_doctor", doctor_error),
+        ("memory_analytics", analytics_error),
+        ("artifacts", artifacts_error),
+    ):
+        if error:
+            notices.append({"probe": label, "message": error})
+
+    return {
+        "generated_at": utc_now(),
+        "session": session,
+        "health": health,
+        "skills": {
+            "summary": audit.get("summary", {}),
+            "top_skill_names": [item["display_name"] for item in (skills or [])[:6]],
+        },
+        "memory": {
+            "doctor": doctor or {},
+            "analytics": analytics or {},
+            "summary": {
+                "issues": len((doctor or {}).get("issues", [])) if doctor else None,
+                "resolved_project": (doctor or {}).get("resolved_project"),
+                "pending_total": (analytics or {}).get("pending_total"),
+                "older_than_72h": ((analytics or {}).get("age_bands") or {}).get("72h+"),
+            },
+        },
+        "artifacts": artifacts or {"summary": {"total_html": 0}, "items": []},
+        "runtime": {
+            "implementation_report_present": (config.output_dir / IMPLEMENTATION_REPORT_NAME).exists(),
+            "recent_exports_total": len(export_ledger or []),
+            "recent_mutations_total": len(mutation_ledger or []),
+            "passcode_env": ADMIN_PASSCODE_ENV,
+        },
+        "latencies_ms": {
+            "skills_scan": skills_ms,
+            "memory_doctor": doctor_ms,
+            "memory_analytics": analytics_ms,
+            "artifacts_index": artifacts_ms,
+        },
+        "notices": notices,
+    }
 
 
 def render_skills_export(config: CockpitConfig) -> str:
@@ -1188,83 +1674,37 @@ def render_skills_export(config: CockpitConfig) -> str:
     cards = "".join(compact_skill_card(skill) for skill in skills)
     body = f"""
       {cockpit_topbar("تصدير مراجعة المهارات", "Skills review export", meta)}
-      <section class="hero-stage" data-parallax>
-        <div class="hero-inner">
-          <div class="hero-grid">
-            <div class="hero-copy">
-              <p class="hero-kicker">{v2.bilingual_html("Live skill truth", "Live skill truth", "span")}</p>
-              <h1>{v2.bilingual_html('مراجعة المهارات من المصدر الحي تحت <span class="accent">~/.codex/skills</span>', 'Skill review staged directly from <span class="accent">~/.codex/skills</span>', "span")}</h1>
-              {v2.bilingual_text("هذا التصدير يثبت أن الحقيقة تأتي من ملفات المهارات الحية نفسها، بينما الكتالوج مجرد طبقة مقارنة وتشخيص drift.", "This export proves that truth comes from the live skill files themselves, while the catalog stays a comparison and drift-detection overlay.", "p", "muted-copy")}
-              <div class="tag-row">
-                {v2.inline_tag("live truth", "live truth", "accent")}
-                {v2.inline_tag("catalog overlay", "catalog overlay")}
-                {v2.inline_tag("readonly surface", "readonly surface")}
-              </div>
-            </div>
-            <article class="poster-surface hero-panel">
-              <div class="poster-surface__headline">
-                <div class="tag-row">
-                  {v2.inline_tag("source root", "source root", "accent")}
-                  {v2.code_tag(str(config.skills_root))}
-                </div>
-                <div class="poster-surface__score">
-                  <strong>{audit["summary"]["live_total"]}</strong>
-                  <span>{v2.bilingual_html("مهارة live", "Live skills", "span")}</span>
-                </div>
-                <div class="poster-surface__name">{v2.bilingual_html("Audit + diff snapshot", "Audit + diff snapshot", "span")}</div>
-              </div>
-              {kv_fact_list([
-                  ("catalog_total", str(audit["summary"]["catalog_total"])),
-                  ("missing_from_catalog", str(audit["summary"]["missing_from_catalog"])),
-                  ("missing_on_disk", str(audit["summary"]["missing_on_disk"])),
-                  ("stale_docs", str(audit["summary"]["stale_docs"])),
-              ])}
-            </article>
+      <section class="route-shell">
+        <div class="route-shell__head">
+          <div class="route-shell__intro">
+            <p class="section-kicker">{v2.bilingual_html("Readonly live source", "Readonly live source", "span")}</p>
+            <h2>{v2.bilingual_html("المهارات الحية من المصدر الفعلي", "Live skills from the actual source", "span")}</h2>
+            <p class="muted-copy">{v2.bilingual_html("الحقيقة هنا تأتي من `~/.codex/skills` مباشرة، والكتالوج يظل طبقة مقارنة فقط.", "Truth here comes directly from `~/.codex/skills`, while the catalog stays comparison-only.", "span")}</p>
           </div>
         </div>
-      </section>
-      <section class="section-block">
-        <div class="section-head">
-          <p class="section-kicker">{v2.bilingual_html("Audit summary", "Audit summary", "span")}</p>
-          <h2>{v2.bilingual_html("نتيجة المقارنة مع الكتالوج", "Catalog comparison result", "span")}</h2>
+        <div class="summary-band">
+          <article class="summary-panel"><div class="summary-panel__value">{audit["summary"]["live_total"]}</div><div class="summary-panel__label">{v2.bilingual_html("إجمالي live", "Live total", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{audit["summary"]["missing_from_catalog"]}</div><div class="summary-panel__label">{v2.bilingual_html("خارج الكتالوج", "Missing in catalog", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{audit["summary"]["metadata_drift"]}</div><div class="summary-panel__label">{v2.bilingual_html("drift metadata", "Metadata drift", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{audit["summary"]["stale_docs"]}</div><div class="summary-panel__label">{v2.bilingual_html("docs stale", "Stale docs", "span")}</div></article>
         </div>
-        <div class="section-divider"></div>
-        <div class="panel-grid">
-          <article class="insight-panel">
-            <h3>{v2.bilingual_html("Drift summary", "Drift summary", "span")}</h3>
-            {kv_fact_list([
-                ("live_total", str(audit["summary"]["live_total"])),
-                ("metadata_drift", str(audit["summary"]["metadata_drift"])),
-                ("fresh_docs", str(audit["summary"]["fresh_docs"])),
-                ("missing_docs", str(audit["summary"]["missing_docs"])),
-            ])}
+        <div class="stream-grid">
+          <article class="stream-panel">
+            <h3>{v2.bilingual_html("Catalog findings", "Catalog findings", "span")}</h3>
+            {report_list([escape(item["skill_key"]) for item in audit["missing_from_catalog"][:10]] or ["No uncatalogued live skills detected."])}
           </article>
-          <article class="insight-panel">
-            <h3>{v2.bilingual_html("Open findings", "Open findings", "span")}</h3>
-            {report_list([
-                escape(item["skill_key"]) for item in audit["missing_from_catalog"][:12]
-            ] or ["No uncatalogued live skills detected in this pass."])}
-          </article>
-          <article class="insight-panel">
+          <article class="stream-panel">
             <h3>{v2.bilingual_html("Stale docs", "Stale docs", "span")}</h3>
-            {report_list([
-                f"<code>{escape(item['skill_key'])}</code> — {escape(item['doc_path'] or '-')}" for item in audit["stale_docs"][:12]
-            ] or ["No stale docs detected in this pass."])}
+            {report_list([f"<code>{escape(item['skill_key'])}</code> — {escape(item['doc_path'] or '-')}" for item in audit["stale_docs"][:10]] or ["No stale docs detected."])}
           </article>
         </div>
-      </section>
-      <section class="section-block">
-        <div class="section-head">
-          <p class="section-kicker">{v2.bilingual_html("Live inventory", "Live inventory", "span")}</p>
-          <h2>{v2.bilingual_html("كل المهارات الحية", "All live skills", "span")}</h2>
-        </div>
-        <div class="section-divider"></div>
-        <div class="card-grid">
-          {cards}
-        </div>
+        <article class="stream-panel">
+          <h3>{v2.bilingual_html("Live inventory", "Live inventory", "span")}</h3>
+          <div class="surface-stream">{cards}</div>
+        </article>
       </section>
     """
-    return render_shell(title_en="Omega HUD Skills Review", title_ar="تصدير مراجعة المهارات", body_class="skills-page", body_html=body)
+    return render_shell(title_en="Omega HUD Skills Review", title_ar="تصدير مراجعة المهارات", body_class="cockpit-admin-v2 skills-page", body_html=body)
 
 
 def render_memory_export(config: CockpitConfig) -> str:
@@ -1283,19 +1723,19 @@ def render_memory_export(config: CockpitConfig) -> str:
             (pretty_timestamp(utc_now()), "تم التوليد", "Generated", ""),
         ]
     )
-    history_items = "".join(
-        f"<li><code>{escape(item['event_type'])}</code> — {escape(item['event_id'])} — {escape(pretty_timestamp(item['created_at']))}</li>"
-        for item in history["items"][:12]
-    )
     queue_cards = "".join(
         f"""
-          <article class="insight-panel">
-            <div class="tag-row">
-              {v2.code_tag(queue['id'])}
-              {v2.inline_tag(str(queue['actionable_total']), "actionable", "accent" if queue['actionable_total'] else "")}
+          <article class="stream-row">
+            <div class="stream-row__headline">
+              <div>
+                <div class="stream-row__title">{v2.bilingual_html(queue['label_ar'], queue['label_en'], "span")}</div>
+                <div class="stream-row__subtitle">{v2.bilingual_html(queue['description_ar'], queue['description_en'], "span")}</div>
+              </div>
+              <div class="stream-row__meta">
+                {v2.code_tag(queue['id'])}
+                {v2.inline_tag(str(queue['actionable_total']), "actionable", "accent" if queue['actionable_total'] else "")}
+              </div>
             </div>
-            <h3>{v2.bilingual_html(queue['label_ar'], queue['label_en'], "span")}</h3>
-            <p class="muted-copy">{v2.bilingual_html(queue['description_ar'], queue['description_en'], "span")}</p>
             {kv_fact_list([
                 ("total", str(queue["total"])),
                 ("actionable", str(queue["actionable_total"])),
@@ -1310,105 +1750,53 @@ def render_memory_export(config: CockpitConfig) -> str:
         for item in token_cost["commands"]
         if "error" not in item
     )
+    history_rows = "".join(
+        f"<li><code>{escape(item['event_type'])}</code> — {escape(item['event_id'])} — {escape(pretty_timestamp(item['created_at']))}</li>"
+        for item in history["items"][:12]
+    )
     body = f"""
       {cockpit_topbar("تصدير الميموري", "Memory export", meta)}
-      <section class="hero-stage memory-page" data-parallax>
-        <div class="hero-inner">
-          <div class="hero-grid">
-            <div class="hero-copy">
-              <p class="hero-kicker">{v2.bilingual_html("Tool-enabled memory surface", "Tool-enabled memory surface", "span")}</p>
-              <h1>{v2.bilingual_html('سطح تشغيل الميموري بعد التحويل إلى <span class="accent">SQLite-first</span>', 'The memory control surface after the <span class="accent">SQLite-first</span> shift', "span")}</h1>
-              {v2.bilingual_text("هذا التصدير snapshot لصفحة التحكم في الميموري، بما فيها queue diagnosis وcleanup preview وmutation history.", "This export is a snapshot of the memory control surface, including queue diagnosis, cleanup preview, and mutation history.", "p", "muted-copy")}
-              <div class="tag-row">
-                {v2.inline_tag("tool-enabled", "tool-enabled", "accent")}
-                {v2.inline_tag("manual approvals", "manual approvals")}
-                {v2.inline_tag("smart cleanup", "smart cleanup")}
-              </div>
-            </div>
-            <article class="poster-surface hero-panel">
-              <div class="poster-surface__headline">
-                <div class="tag-row">
-                  {v2.inline_tag("state db", "state db", "accent")}
-                  {v2.code_tag(str(doctor["state_db"]))}
-                </div>
-                <div class="poster-surface__score">
-                  <strong>{triage["summary"]["pending_total"]}</strong>
-                  <span>{v2.bilingual_html("pending", "Pending", "span")}</span>
-                </div>
-                <div class="poster-surface__name">{v2.bilingual_html("Memory operator snapshot", "Memory operator snapshot", "span")}</div>
-              </div>
-              {kv_fact_list([
-                  ("resolved_project", str(doctor["resolved_project"] or "-")),
-                  ("doctor_issues", str(len(doctor["issues"]))),
-                  ("event_history", str(history["total"])),
-                  ("oldest_pending_at", pretty_timestamp(analytics["oldest_pending_at"])),
-              ])}
-            </article>
+      <section class="route-shell">
+        <div class="route-shell__head">
+          <div class="route-shell__intro">
+            <p class="section-kicker">{v2.bilingual_html("Tool-enabled surface", "Tool-enabled surface", "span")}</p>
+            <h2>{v2.bilingual_html("سطح الميموري داخل الكوكبيت الإدارية", "The memory surface inside the admin cockpit", "span")}</h2>
+            <p class="muted-copy">{v2.bilingual_html("هذا snapshot تشغيلي للميموري مع triage, analytics, cleanup, history, والتكلفة التقريبية.", "This is an operational memory snapshot with triage, analytics, cleanup, history, and token cost.", "span")}</p>
           </div>
         </div>
-      </section>
-      <section class="section-block">
-        <div class="section-head">
-          <p class="section-kicker">{v2.bilingual_html("Current truth", "Current truth", "span")}</p>
-          <h2>{v2.bilingual_html("Doctor + triage + analytics", "Doctor + triage + analytics", "span")}</h2>
+        <div class="summary-band">
+          <article class="summary-panel"><div class="summary-panel__value">{triage["summary"]["pending_total"]}</div><div class="summary-panel__label">{v2.bilingual_html("pending", "Pending", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{triage["summary"]["promotable_total"]}</div><div class="summary-panel__label">{v2.bilingual_html("promotable", "Promotable", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{analytics["age_bands"]["72h+"]}</div><div class="summary-panel__label">{v2.bilingual_html("older than 72h", "Older than 72h", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{len(history["items"])}</div><div class="summary-panel__label">{v2.bilingual_html("recent events", "Recent events", "span")}</div></article>
         </div>
-        <div class="section-divider"></div>
-        <div class="panel-grid">
-          <article class="insight-panel">
-            <h3>{v2.bilingual_html("Doctor", "Doctor", "span")}</h3>
+        <div class="stream-grid">
+          <article class="stream-panel">
+            <h3>{v2.bilingual_html("Doctor + analytics", "Doctor + analytics", "span")}</h3>
             {kv_fact_list([
                 ("memory_root", str(doctor["memory_root"])),
+                ("resolved_project", str(doctor["resolved_project"] or "-")),
                 ("issues", str(len(doctor["issues"]))),
-                ("project_slug", str(doctor["resolved_project"] or "-")),
+                ("pending_total", str(analytics["pending_total"])),
             ])}
           </article>
-          <article class="insight-panel">
-            <h3>{v2.bilingual_html("Triage summary", "Triage summary", "span")}</h3>
-            {kv_fact_list([
-                ("pending_total", str(triage["summary"]["pending_total"])),
-                ("promotable_total", str(triage["summary"]["promotable_total"])),
-                ("ephemeral_total", str(triage["summary"]["ephemeral_total"])),
-                ("conflict_count", str(triage["summary"]["conflict_count"])),
-            ])}
-          </article>
-          <article class="insight-panel">
-            <h3>{v2.bilingual_html("Age bands", "Age bands", "span")}</h3>
-            {kv_fact_list([
-                ("0-24h", str(analytics["age_bands"]["0-24h"])),
-                ("24-72h", str(analytics["age_bands"]["24-72h"])),
-                ("72h+", str(analytics["age_bands"]["72h+"])),
-            ])}
-          </article>
-        </div>
-      </section>
-      <section class="section-block">
-        <div class="section-head">
-          <p class="section-kicker">{v2.bilingual_html("Cleanup preview", "Cleanup preview", "span")}</p>
-          <h2>{v2.bilingual_html("الـ queues الذكية", "Smart cleanup queues", "span")}</h2>
-        </div>
-        <div class="section-divider"></div>
-        <div class="panel-grid">
-          {queue_cards}
-        </div>
-      </section>
-      <section class="section-block">
-        <div class="section-head">
-          <p class="section-kicker">{v2.bilingual_html("History + cost", "History + cost", "span")}</p>
-          <h2>{v2.bilingual_html("التاريخ والتكلفة", "History and token cost", "span")}</h2>
-        </div>
-        <div class="section-divider"></div>
-        <div class="panel-grid">
-          <article class="insight-panel">
-            <h3>{v2.bilingual_html("Recent events", "Recent events", "span")}</h3>
-            <ul class="report-list">{history_items or '<li>No events</li>'}</ul>
-          </article>
-          <article class="insight-panel">
+          <article class="stream-panel">
             <h3>{v2.bilingual_html("Token cost", "Token cost", "span")}</h3>
             <ul class="report-list">{token_rows or '<li>No token metrics</li>'}</ul>
           </article>
-          <article class="insight-panel">
+        </div>
+        <article class="stream-panel">
+          <h3>{v2.bilingual_html("Smart cleanup queues", "Smart cleanup queues", "span")}</h3>
+          <div class="surface-stream">{queue_cards}</div>
+        </article>
+        <div class="stream-grid">
+          <article class="stream-panel">
+            <h3>{v2.bilingual_html("Recent events", "Recent events", "span")}</h3>
+            <ul class="report-list">{history_rows or '<li>No events</li>'}</ul>
+          </article>
+          <article class="stream-panel">
             <h3>{v2.bilingual_html("Inspect snapshot", "Inspect snapshot", "span")}</h3>
-            <pre class="code-panel">{escape(json.dumps({
+            <pre class="code-block">{escape(json.dumps({
                 "user_profile": inspect.get("user_profile", {}),
                 "project_profile": inspect.get("project_profile", {}),
             }, ensure_ascii=False, indent=2))}</pre>
@@ -1416,7 +1804,254 @@ def render_memory_export(config: CockpitConfig) -> str:
         </div>
       </section>
     """
-    return render_shell(title_en="Omega HUD Memory", title_ar="تصدير الميموري", body_class="memory-page", body_html=body)
+    return render_shell(title_en="Omega HUD Memory", title_ar="تصدير الميموري", body_class="cockpit-admin-v2 memory-page", body_html=body)
+
+
+def render_artifacts_export(config: CockpitConfig) -> str:
+    artifacts = load_artifacts_index(config.output_dir)
+    rows = "".join(
+        f"""
+          <article class="stream-row">
+            <div class="stream-row__headline">
+              <div>
+                <div class="stream-row__title">{escape(item["artifact_name"])}</div>
+                <div class="stream-row__subtitle">{escape(item["absolute_path"])}</div>
+              </div>
+              <div class="stream-row__meta">
+                {v2.inline_tag(item["family_label_ar"], item["family_label_en"], "accent" if item["family_id"] == "omega-hud" else "")}
+                {v2.inline_tag("pdf" if item["has_pdf_companion"] else "no pdf", "pdf" if item["has_pdf_companion"] else "no pdf")}
+                {v2.inline_tag("qa" if item["has_qa_companion"] else "no qa", "qa" if item["has_qa_companion"] else "no qa")}
+              </div>
+            </div>
+            {kv_fact_list([
+                ("modified_at", pretty_timestamp(item["modified_at"])),
+                ("size_bytes", str(item["size_bytes"])),
+                ("public_path", item["public_path"]),
+            ])}
+          </article>
+        """
+        for item in artifacts["items"][:20]
+    )
+    meta = metric_strip(
+        [
+            (artifacts["summary"]["total_html"], "ملفات HTML", "HTML files", "accent"),
+            (artifacts["summary"]["with_pdf_companion"], "with pdf", "With PDF", ""),
+            (artifacts["summary"]["with_qa_companion"], "with qa", "With QA", ""),
+            (pretty_timestamp(utc_now()), "تم التوليد", "Generated", ""),
+        ]
+    )
+    body = f"""
+      {cockpit_topbar("تصدير الـ Artifacts", "Artifacts export", meta)}
+      <section class="route-shell">
+        <div class="route-shell__head">
+          <div class="route-shell__intro">
+            <p class="section-kicker">{v2.bilingual_html("Live output inventory", "Live output inventory", "span")}</p>
+            <h2>{v2.bilingual_html("أرشيف الـ HTML المحلي داخل الكوكبيت", "The local HTML archive inside the cockpit", "span")}</h2>
+            <p class="muted-copy">{v2.bilingual_html("هذا التصدير يفهرس كل ملفات `output/html` مع companions والـ family grouping.", "This export indexes all `output/html` files with companion detection and family grouping.", "span")}</p>
+          </div>
+        </div>
+        <div class="summary-band">
+          <article class="summary-panel"><div class="summary-panel__value">{artifacts["summary"]["total_html"]}</div><div class="summary-panel__label">{v2.bilingual_html("html files", "HTML files", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{artifacts["summary"]["with_pdf_companion"]}</div><div class="summary-panel__label">{v2.bilingual_html("with pdf", "With PDF", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{artifacts["summary"]["with_qa_companion"]}</div><div class="summary-panel__label">{v2.bilingual_html("with qa", "With QA", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{artifacts["summary"]["report_total"]}</div><div class="summary-panel__label">{v2.bilingual_html("reports", "Reports", "span")}</div></article>
+        </div>
+        <article class="stream-panel">
+          <h3>{v2.bilingual_html("Latest inventory", "Latest inventory", "span")}</h3>
+          <div class="surface-stream">{rows}</div>
+        </article>
+      </section>
+    """
+    return render_shell(title_en="Omega HUD Artifacts", title_ar="تصدير الـ Artifacts", body_class="cockpit-admin-v2 artifacts-page", body_html=body)
+
+
+def render_runtime_export(
+    config: CockpitConfig,
+    session_state: dict[str, Any] | None = None,
+    export_ledger: list[dict[str, Any]] | None = None,
+    mutation_ledger: list[dict[str, Any]] | None = None,
+) -> str:
+    overview = build_runtime_overview(config, session_state, export_ledger, mutation_ledger)
+    meta = metric_strip(
+        [
+            ("loopback", "محلي", "Local", "accent"),
+            ("mutations-only", "gating", "Gating", ""),
+            (overview["runtime"]["recent_exports_total"], "exports", "Exports", ""),
+            (pretty_timestamp(utc_now()), "تم التوليد", "Generated", ""),
+        ]
+    )
+    body = f"""
+      {cockpit_topbar("تصدير الـ Runtime", "Runtime export", meta)}
+      <section class="route-shell">
+        <div class="route-shell__head">
+          <div class="route-shell__intro">
+            <p class="section-kicker">{v2.bilingual_html("Operator runtime", "Operator runtime", "span")}</p>
+            <h2>{v2.bilingual_html("صورة تشغيلية للكوكبيت الإدارية", "An operational picture of the admin cockpit", "span")}</h2>
+            <p class="muted-copy">{v2.bilingual_html("هذا snapshot يثبت health, session gate, latencies, live skills, memory, وartifact inventory.", "This snapshot proves health, session gate, latencies, live skills, memory, and artifact inventory.", "span")}</p>
+          </div>
+        </div>
+        <div class="summary-band">
+          <article class="summary-panel"><div class="summary-panel__value">{'yes' if overview['session']['passcode_configured'] else 'no'}</div><div class="summary-panel__label">{v2.bilingual_html("passcode configured", "Passcode configured", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{'armed' if overview['session']['writes_available'] else 'locked'}</div><div class="summary-panel__label">{v2.bilingual_html("write state", "Write state", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{overview['memory']['summary'].get('pending_total') or 0}</div><div class="summary-panel__label">{v2.bilingual_html("pending memory", "Pending memory", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{overview['artifacts']['summary'].get('total_html') or 0}</div><div class="summary-panel__label">{v2.bilingual_html("html artifacts", "HTML artifacts", "span")}</div></article>
+        </div>
+        <div class="stream-grid">
+          <article class="stream-panel">
+            <h3>{v2.bilingual_html("Health + session", "Health + session", "span")}</h3>
+            {kv_fact_list([
+                ("workspace_root", overview["health"]["workspace_root"]),
+                ("host", overview["health"]["host"]),
+                ("port", str(overview["health"]["port"])),
+                ("lock_reason", str(overview["session"]["lock_reason"])),
+            ])}
+          </article>
+          <article class="stream-panel">
+            <h3>{v2.bilingual_html("Latency snapshot", "Latency snapshot", "span")}</h3>
+            {kv_fact_list([
+                ("skills_scan", f"{overview['latencies_ms']['skills_scan']} ms"),
+                ("memory_doctor", f"{overview['latencies_ms']['memory_doctor']} ms"),
+                ("memory_analytics", f"{overview['latencies_ms']['memory_analytics']} ms"),
+                ("artifacts_index", f"{overview['latencies_ms']['artifacts_index']} ms"),
+            ])}
+          </article>
+        </div>
+        <article class="stream-panel">
+          <h3>{v2.bilingual_html("Runtime notices", "Runtime notices", "span")}</h3>
+          {report_list([f"<code>{escape(item['probe'])}</code> — {escape(item['message'])}" for item in overview["notices"]] or ["No runtime notices in this export."])}
+        </article>
+      </section>
+    """
+    return render_shell(title_en="Omega HUD Runtime", title_ar="تصدير الـ Runtime", body_class="cockpit-admin-v2 runtime-page", body_html=body)
+
+
+def default_proof_ledger() -> dict[str, list[str]]:
+    return {
+        "ran": ["Implementation artifact generated from the current local cockpit state."],
+        "manual": ["No explicit post-implementation proof supplied in this generation context."],
+        "not_run": [],
+        "blocked": [],
+    }
+
+
+def render_implementation_report(
+    config: CockpitConfig,
+    *,
+    proof_ledger: dict[str, list[str]] | None = None,
+    runtime_overview: dict[str, Any] | None = None,
+) -> str:
+    proof = proof_ledger or default_proof_ledger()
+    overview = runtime_overview or build_runtime_overview(config, default_session_payload(config), [], [])
+    artifacts = load_artifacts_index(config.output_dir)
+    meta = metric_strip(
+        [
+            ("V2", "الإصدار", "Version", "accent"),
+            (len(SURFACE_IDS), "سطوح حيّة", "Live surfaces", ""),
+            (artifacts["summary"]["total_html"], "artifacts", "Artifacts", ""),
+            (pretty_timestamp(utc_now()), "تم التوليد", "Generated", ""),
+        ]
+    )
+    body = f"""
+      {cockpit_topbar("تقرير تنفيذ Omega HUD", "Omega HUD implementation report", meta)}
+      <section class="route-shell">
+        <div class="route-shell__head">
+          <div class="route-shell__intro">
+            <p class="section-kicker">{v2.bilingual_html("Implementation dossier", "Implementation dossier", "span")}</p>
+            <h2>{v2.bilingual_html("ماذا حدث أثناء بناء Omega Cockpit Admin V2", "What happened while building Omega Cockpit Admin V2", "span")}</h2>
+            <p class="muted-copy">{v2.bilingual_html("هذا الملف يوثّق ما بُني، ما تغيّر من V1، ما الذي تم الحفاظ عليه، وما الذي تم التحقق منه بعد التنفيذ.", "This file documents what was built, what changed from V1, what was protected, and what was verified after implementation.", "span")}</p>
+          </div>
+        </div>
+        <div class="summary-band">
+          <article class="summary-panel"><div class="summary-panel__value">4</div><div class="summary-panel__label">{v2.bilingual_html("surfaces", "Surfaces", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{'local'}</div><div class="summary-panel__label">{v2.bilingual_html("deployment", "Deployment", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{'mutations-only'}</div><div class="summary-panel__label">{v2.bilingual_html("gate mode", "Gate mode", "span")}</div></article>
+          <article class="summary-panel"><div class="summary-panel__value">{artifacts["summary"]["total_html"]}</div><div class="summary-panel__label">{v2.bilingual_html("html artifacts", "HTML artifacts", "span")}</div></article>
+        </div>
+        <div class="stream-grid">
+          <article class="stream-panel">
+            <h3>{v2.bilingual_html("Before / after", "Before / after", "span")}</h3>
+            {report_list([
+                "V1 had two live routes: <code>skills</code> and <code>memory</code>; V2 expands to <code>skills</code>, <code>memory</code>, <code>artifacts</code>, and <code>runtime</code>.",
+                "V1 used a simpler surface shell; V2 introduces a command-deck layout with left rail, top command strip, shared drawer, and operator workspace.",
+                "V1 relied on nonce only; V2 adds an in-memory admin passcode gate for mutating actions only.",
+            ])}
+          </article>
+          <article class="stream-panel">
+            <h3>{v2.bilingual_html("Locked decisions", "Locked decisions", "span")}</h3>
+            {report_list([
+                "Local-first loopback runtime stays the deployment model.",
+                "Live skill truth remains <code>~/.codex/skills</code>; the catalog remains comparison-only.",
+                "Dangerous writes stay gated and <code>omega-hud-html.html</code> remains a legacy artifact.",
+            ])}
+          </article>
+        </div>
+        <article class="stream-panel">
+          <h3>{v2.bilingual_html("What was built", "What was built", "span")}</h3>
+          {report_list([
+              "A command-deck shell with sidebar navigation, lock slot, route workspace, and shared evidence drawer.",
+              "A mutation gate based on <code>OMEGA_COCKPIT_ADMIN_PASSCODE</code> with unlock/lock session semantics held only in memory.",
+              "Two new read-heavy surfaces: <code>Artifacts Hub</code> and <code>Runtime</code>.",
+              "Extended exports for <code>omega-hud-artifacts.html</code> and <code>omega-hud-runtime.html</code>.",
+              "An implementation dossier artifact under the Omega HUD HTML identity.",
+          ])}
+        </article>
+        <article class="stream-panel">
+          <h3>{v2.bilingual_html("Public interface changes", "Public interface changes", "span")}</h3>
+          {report_list([
+              "<code>GET /api/session/state</code>",
+              "<code>POST /api/session/unlock</code> and <code>POST /api/session/lock</code>",
+              "<code>GET /api/artifacts/index</code> and <code>GET /api/artifacts/{artifact_name}</code>",
+              "<code>GET /api/runtime/overview</code> and <code>GET /api/runtime/ledger</code>",
+              "<code>GET /exports/{artifact_name}</code> for local artifact viewing",
+          ])}
+        </article>
+        <div class="stream-grid">
+          <article class="stream-panel">
+            <h3>{v2.bilingual_html("Artifact inventory", "Artifact inventory", "span")}</h3>
+            {kv_fact_list([
+                ("total_html", str(artifacts["summary"]["total_html"])),
+                ("with_pdf_companion", str(artifacts["summary"]["with_pdf_companion"])),
+                ("with_qa_companion", str(artifacts["summary"]["with_qa_companion"])),
+                ("implementation_report_present", "yes" if (config.output_dir / IMPLEMENTATION_REPORT_NAME).exists() else "no"),
+            ])}
+          </article>
+          <article class="stream-panel">
+            <h3>{v2.bilingual_html("Runtime snapshot", "Runtime snapshot", "span")}</h3>
+            {kv_fact_list([
+                ("passcode_configured", str(overview["session"]["passcode_configured"])),
+                ("writes_available", str(overview["session"]["writes_available"])),
+                ("pending_memory", str(overview["memory"]["summary"].get("pending_total"))),
+                ("recent_exports_total", str(overview["runtime"]["recent_exports_total"])),
+            ])}
+          </article>
+        </div>
+        <article class="stream-panel">
+          <h3>{v2.bilingual_html("Proof ledger", "Proof ledger", "span")}</h3>
+          <div class="stream-grid">
+            <div>{report_list(proof.get("ran", []))}</div>
+            <div>{report_list(proof.get("manual", []))}</div>
+          </div>
+          <div class="stream-grid">
+            <div>{report_list(proof.get("not_run", []))}</div>
+            <div>{report_list(proof.get("blocked", []))}</div>
+          </div>
+        </article>
+        <article class="stream-panel">
+          <h3>{v2.bilingual_html("Deferred in this phase", "Deferred in this phase", "span")}</h3>
+          {report_list([
+              "No multi-user roles or remote hosting were added in V2.",
+              "Artifacts Hub remains inventory/open/inspect only; no bulk delete/regenerate flows were added.",
+              "Runtime remains read-only and diagnostic rather than becoming a new orchestration surface.",
+          ])}
+        </article>
+      </section>
+    """
+    return render_shell(
+        title_en="Omega HUD Admin V2 Implementation Report",
+        title_ar="تقرير تنفيذ Omega Cockpit Admin V2",
+        body_class="cockpit-admin-v2 implementation-report-page",
+        body_html=body,
+    )
 
 
 def safe_export_filename(surface_id: str) -> str:
@@ -1424,14 +2059,38 @@ def safe_export_filename(surface_id: str) -> str:
     return f"omega-hud-{normalized}.html"
 
 
-def export_surface(config: CockpitConfig, surface_id: str) -> Path:
+def export_surface(
+    config: CockpitConfig,
+    surface_id: str,
+    *,
+    session_state: dict[str, Any] | None = None,
+    export_ledger: list[dict[str, Any]] | None = None,
+    mutation_ledger: list[dict[str, Any]] | None = None,
+) -> Path:
     if surface_id not in SURFACE_IDS:
         raise ValueError(f"Unsupported surface id: {surface_id}")
     config.output_dir.mkdir(parents=True, exist_ok=True)
     target = config.output_dir / safe_export_filename(surface_id)
     if surface_id == "skills-review":
         html_text = render_skills_export(config)
-    else:
+    elif surface_id == "memory":
         html_text = render_memory_export(config)
+    elif surface_id == "artifacts":
+        html_text = render_artifacts_export(config)
+    else:
+        html_text = render_runtime_export(config, session_state, export_ledger, mutation_ledger)
+    target.write_text(html_text, encoding="utf-8")
+    return target
+
+
+def write_implementation_report(
+    config: CockpitConfig,
+    *,
+    proof_ledger: dict[str, list[str]] | None = None,
+    runtime_overview: dict[str, Any] | None = None,
+) -> Path:
+    config.output_dir.mkdir(parents=True, exist_ok=True)
+    target = config.output_dir / IMPLEMENTATION_REPORT_NAME
+    html_text = render_implementation_report(config, proof_ledger=proof_ledger, runtime_overview=runtime_overview)
     target.write_text(html_text, encoding="utf-8")
     return target
